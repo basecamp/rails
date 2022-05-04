@@ -10,6 +10,7 @@ module ActionText
 
     serialize :body, ActionText::Content
     delegate :to_s, :nil?, to: :body
+    delegate_missing_to :body
 
     belongs_to :record, polymorphic: true, touch: true
     has_many_attached :embeds

@@ -50,7 +50,12 @@ module ActionView::Helpers
       options = @options.stringify_keys
       add_default_name_and_id(options)
       options["input"] ||= dom_id(object, [options["id"], :trix_input].compact.join("_")) if object
-      @template_object.rich_text_area_tag(options.delete("name"), options.fetch("value") { value }, options.except("value"))
+      prepared_value = prepare_value(options.fetch("value") { value })
+      @template_object.rich_text_area_tag(options.delete("name"), prepared_value, options.except("value"))
+    end
+
+    def prepare_value(value)
+      value&.body.try(:to_trix_html)
     end
   end
 
