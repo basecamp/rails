@@ -8,7 +8,7 @@ module ActionText
       class << self
         def from_node(node)
           if node["url"] && content_type_is_image?(node["content-type"])
-            new(attributes_from_node(node))
+            new(**attributes_from_node(node))
           end
         end
 
@@ -21,17 +21,19 @@ module ActionText
             { url: node["url"],
               content_type: node["content-type"],
               width: node["width"],
-              height: node["height"] }
+              height: node["height"],
+              data: Attachment.data_attributes_from_node(node) }
           end
       end
 
-      attr_reader :url, :content_type, :width, :height
+      attr_reader :url, :content_type, :width, :height, :data
 
-      def initialize(attributes = {})
-        @url = attributes[:url]
-        @content_type = attributes[:content_type]
-        @width = attributes[:width]
-        @height = attributes[:height]
+      def initialize(url:, content_type:, width:, height:, data: {})
+        @url = url
+        @content_type = content_type
+        @width = width
+        @height = height
+        @data = data.stringify_keys.freeze
       end
 
       def attachable_plain_text_representation(caption)
