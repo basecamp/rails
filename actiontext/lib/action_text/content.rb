@@ -27,7 +27,9 @@ module ActionText
     end
 
     def links
-      @links ||= fragment.find_all("a[href]").map { |a| a["href"] }.uniq
+      @links ||= fragment.find_all do |node|
+        node.name == "a" && node["href"]
+      end.map { |node| node["href"] }.uniq
     end
 
     def attachments
@@ -58,33 +60,41 @@ module ActionText
     end
 
     def render_attachments(**options, &block)
-      content = fragment.replace(ActionText::Attachment.tag_name) do |node|
+      fragment = self.fragment.replace(ActionText::Attachment::SELECTOR) do |node|
         block.call(attachment_for_node(node, **options))
       end
-      self.class.new(content, canonicalize: false)
+      update(fragment)
     end
 
     def render_attachment_galleries(&block)
-      content = ActionText::AttachmentGallery.fragment_by_replacing_attachment_gallery_nodes(fragment) do |node|
+      fragment = ActionText::AttachmentGallery.fragment_by_replacing_attachment_gallery_nodes(self.fragment) do |node|
         block.call(attachment_gallery_for_node(node))
       end
-      self.class.new(content, canonicalize: false)
+      update(fragment)
+    end
+
+    def sanitize
+      update(fragment.sanitize)
+    end
+
+    def update(fragment)
+      fragment.equal?(self.fragment) ? self : self.class.new(fragment, canonicalize: false)
     end
 
     def to_plain_text
-      render_attachments(with_full_attributes: false, &:to_plain_text).fragment.to_plain_text
+      @plain_text ||= render_attachments(with_full_attributes: false, &:to_plain_text).fragment.to_plain_text
     end
 
     def to_trix_html
-      render_attachments(&:to_trix_attachment).to_html
+      @trix_html ||= render_attachments(&:to_trix_attachment).to_html
     end
 
     def to_html
-      fragment.to_html
+      @html ||= fragment.to_html
     end
 
     def to_rendered_html_with_layout
-      render layout: "action_text/contents/content", partial: to_partial_path, formats: :html, locals: { content: self }
+      @rendered_html_with_layout ||= render(layout: "action_text/contents/content", partial: to_partial_path, formats: :html, locals: { content: self })
     end
 
     def to_partial_path
@@ -111,16 +121,17 @@ module ActionText
 
     private
       def attachment_nodes
-        @attachment_nodes ||= fragment.find_all(ActionText::Attachment.tag_name)
+        @attachment_nodes ||= fragment.find_all { |node| node.name == ActionText::Attachment.tag_name }
       end
 
       def attachment_gallery_nodes
-        @attachment_gallery_nodes ||= ActionText::AttachmentGallery.find_attachment_gallery_nodes(fragment)
+        @attachment_gallery_nodes ||= fragment.find_all(&AttachmentGallery::SELECTOR)
       end
 
       def attachment_for_node(node, with_full_attributes: true)
-        attachment = ActionText::Attachment.from_node(node)
-        with_full_attributes ? attachment.with_full_attributes : attachment
+        @attachments_by_node ||= {}
+        attachment = @attachments_by_node[node] ||= ActionText::Attachment.from_node(node)
+        with_full_attributes ? attachment.with_full_attributes || attachment : attachment
       end
 
       def attachment_gallery_for_node(node)
