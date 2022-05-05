@@ -8,7 +8,8 @@ module ActionText
 
     mattr_accessor :tag_name, default: "action-text-attachment"
 
-    ATTRIBUTES = %w( sgid content-type url href filename filesize width height previewable presentation caption )
+    SELECTOR = ->(node) { node.name == tag_name }
+    ATTRIBUTES = %w( sgid content-type url href filename filesize width height previewable presentation caption content )
 
     class << self
       def fragment_by_canonicalizing_attachments(content)
@@ -35,6 +36,15 @@ module ActionText
         end
       end
 
+      def data_attributes_from_node(node)
+        node.attributes.reduce({}) do |attributes, (key, value)|
+          if name = key[/^data-(.+)/, 1]
+            attributes[name] = value
+          end
+          attributes
+        end
+      end
+
       private
         def node_from_attributes(attributes)
           if attributes = process_attributes(attributes).presence
@@ -43,7 +53,16 @@ module ActionText
         end
 
         def process_attributes(attributes)
+          process_attachment_attributes(attributes).merge(process_data_attributes(attributes))
+        end
+
+        def process_attachment_attributes(attributes)
           attributes.transform_keys { |key| key.to_s.underscore.dasherize }.slice(*ATTRIBUTES)
+        end
+
+        def process_data_attributes(attributes)
+          data_attributes = attributes[:data] || {}
+          data_attributes.transform_keys { |key| "data-#{key}" }
         end
     end
 
@@ -61,8 +80,12 @@ module ActionText
       node_attributes["caption"].presence
     end
 
+    def data_attributes
+      @data_attributes ||= self.class.data_attributes_from_node(node)
+    end
+
     def full_attributes
-      node_attributes.merge(attachable_attributes).merge(sgid_attributes)
+      node_attributes.merge(attachable_attributes).merge(sgid_attributes).merge(data: data_attributes)
     end
 
     def with_full_attributes
@@ -75,6 +98,10 @@ module ActionText
       else
         caption.to_s
       end
+    end
+
+    def to_node
+      node
     end
 
     def to_html
