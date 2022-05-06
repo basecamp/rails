@@ -5,20 +5,18 @@ module ActionText
     extend self
 
     def node_to_html(node)
-      node.to_html(save_with: Nokogiri::XML::Node::SaveOptions::AS_HTML)
+      node.to_html
     end
 
     def fragment_for_html(html)
-      document.fragment(html)
+      Okra::HTML.parse_fragment(html)
     end
 
-    def create_element(tag_name, attributes = {})
-      document.create_element(tag_name, attributes)
+    def create_element(tag_name, attributes = {}, child_nodes = [])
+      Okra::HTML.element_node(tag_name, attributes.map do |name, value|
+        string_value = attributes[name].to_s
+        string_value.empty? ? [name.to_s] : [name.to_s, string_value]
+      end, child_nodes)
     end
-
-    private
-      def document
-        Nokogiri::HTML::Document.new.tap { |doc| doc.encoding = "UTF-8" }
-      end
   end
 end
