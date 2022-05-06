@@ -2,111 +2,89 @@
 
 module ActionText
   module PlainTextConversion
+    include Okra::HTML::Constructors
     extend self
 
     def node_to_plain_text(node)
-      remove_trailing_newlines(plain_text_for_node(node))
+      format_text(node_to_plain_text_tree(node))
+    end
+
+    def node_to_plain_text_tree(node)
+      node.replace do |node, index, lineage|
+        name = node.name
+        if name == "blockquote"
+          format_quote(node)
+        elsif name == "br"
+          format_line_break(node)
+        elsif name == "figcaption"
+          format_caption(node)
+        elsif name == "li"
+          format_list_item(node, index, lineage)
+        elsif blocklike?(node)
+          format_block(node)
+        elsif text?(node)
+          node
+        elsif !skippable?(node)
+          node.child_nodes
+        end
+      end
     end
 
     private
-      def plain_text_for_node(node, index = 0)
-        if respond_to?(plain_text_method_for_node(node), true)
-          send(plain_text_method_for_node(node), node, index)
+      def format_quote(node)
+        text_node("“#{format_text(node)}”\n\n")
+      end
+
+      def format_line_break(node)
+        text_node("\n")
+      end
+
+      def format_caption(node)
+        text_node("[#{format_text(node)}]")
+      end
+
+      def format_list_item(node, index, lineage)
+        if lineage.parent_node&.name == "ol"
+          child_nodes = lineage.parent_node.child_nodes
+          original_node = child_nodes[index]
+          siblings = child_nodes.select { |node| node.name == "li" }
+          child_index = siblings.index(original_node)
+          bullet = "#{child_index + 1}."
         else
-          plain_text_for_node_children(node)
+          bullet = "•"
         end
+        text_node("#{bullet} #{format_text(node)}\n")
       end
 
-      def plain_text_for_node_children(node)
-        texts = []
-        node.children.each_with_index do |child, index|
-          texts << plain_text_for_node(child, index)
-        end
-        texts.join
+      def format_block(node)
+        text_node("#{format_text(node)}#{BLOCK_ELEMENT_MARGINS[node.name]}")
       end
 
-      def plain_text_method_for_node(node)
-        :"plain_text_for_#{node.name}_node"
+      def format_text(node)
+        node.where { |node| node.type == :text }.map(&:content).join.chomp("")
       end
 
-      def plain_text_for_block(node, index = 0)
-        "#{remove_trailing_newlines(plain_text_for_node_children(node))}\n\n"
+      BLOCK_ELEMENT_MARGINS = {
+        "div" => "\n",
+        "h1" => "\n\n",
+        "ol" => "\n\n",
+        "p" => "\n\n",
+        "ul" => "\n\n",
+        "tr" => "\n\n",
+        "td" => "\n",
+        "th" => "\n"
+      }
+
+      def blocklike?(node)
+        BLOCK_ELEMENT_MARGINS.key?(node.name)
       end
 
-      %i[ h1 p ].each do |element|
-        alias_method :"plain_text_for_#{element}_node", :plain_text_for_block
+      def skippable?(node)
+        node.name == "script" || node.name == "style"
       end
 
-      def plain_text_for_list(node, index)
-        "#{break_if_nested_list(node, plain_text_for_block(node))}"
-      end
-
-      %i[ ul ol ].each do |element|
-        alias_method :"plain_text_for_#{element}_node", :plain_text_for_list
-      end
-
-      def plain_text_for_br_node(node, index)
-        "\n"
-      end
-
-      def plain_text_for_text_node(node, index)
-        remove_trailing_newlines(node.text)
-      end
-
-      def plain_text_for_div_node(node, index)
-        "#{remove_trailing_newlines(plain_text_for_node_children(node))}\n"
-      end
-
-      def plain_text_for_figcaption_node(node, index)
-        "[#{remove_trailing_newlines(plain_text_for_node_children(node))}]"
-      end
-
-      def plain_text_for_blockquote_node(node, index)
-        text = plain_text_for_block(node)
-        text.sub(/\A(\s*)(.+?)(\s*)\Z/m, '\1“\2”\3')
-      end
-
-      def plain_text_for_li_node(node, index)
-        bullet = bullet_for_li_node(node, index)
-        text = remove_trailing_newlines(plain_text_for_node_children(node))
-        indentation = indentation_for_li_node(node)
-
-        "#{indentation}#{bullet} #{text}\n"
-      end
-
-      def remove_trailing_newlines(text)
-        text.chomp("")
-      end
-
-      def bullet_for_li_node(node, index)
-        if list_node_name_for_li_node(node) == "ol"
-          "#{index + 1}."
-        else
-          "•"
-        end
-      end
-
-      def list_node_name_for_li_node(node)
-        node.ancestors.lazy.map(&:name).grep(/^[uo]l$/).first
-      end
-
-      def indentation_for_li_node(node)
-        depth = list_node_depth_for_node(node)
-        if depth > 1
-          "  " * (depth - 1)
-        end
-      end
-
-      def list_node_depth_for_node(node)
-        node.ancestors.map(&:name).grep(/^[uo]l$/).count
-      end
-
-      def break_if_nested_list(node, text)
-        if list_node_depth_for_node(node) > 0
-          "\n#{text}"
-        else
-          text
-        end
+      def text?(node)
+        node.type == :text
       end
   end
 end
