@@ -36,6 +36,10 @@ module ActionText
       ActiveSupport.on_load(:active_storage_blob) do
         include ActionText::Attachable
 
+        def content_attachable?
+          false
+        end
+
         def previewable_attachable?
           representable?
         end
@@ -43,16 +47,18 @@ module ActionText
         def attachable_plain_text_representation(caption = nil)
           "[#{caption || filename}]"
         end
-
-        def to_trix_content_attachment_partial_path
-          nil
-        end
       end
     end
 
     initializer "action_text.helper" do
       %i[action_controller_base action_mailer].each do |abstract_controller|
         ActiveSupport.on_load(abstract_controller) do
+          Okra::HTML::Sanitization::Configuration.tap do |_|
+            _::ALLOWED_ELEMENTS.merge(["style", ActionText::Attachment.tag_name, "figure", "figcaption"])
+            _::IGNORED_ELEMENTS.delete("style")
+            _::ALLOWED_ATTRIBUTES.merge(ActionText::Attachment::ATTRIBUTES)
+          end
+
           helper ActionText::Engine.helpers
         end
       end
