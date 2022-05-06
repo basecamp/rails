@@ -7,7 +7,7 @@ module ActionText
         case fragment_or_html
         when self
           fragment_or_html
-        when Nokogiri::HTML::DocumentFragment
+        when Okra::HTML::Node
           new(fragment_or_html)
         else
           from_html(fragment_or_html)
@@ -25,21 +25,24 @@ module ActionText
       @source = source
     end
 
-    def find_all(selector)
-      source.css(selector)
+    def find(&selector)
+      source.where(&selector).first
     end
 
-    def update
-      yield source = self.source.clone
-      self.class.new(source)
+    def find_all(&selector)
+      source.where(&selector).nodes
     end
 
-    def replace(selector)
-      update do |source|
-        source.css(selector).each do |node|
-          node.replace(yield(node).to_s)
-        end
-      end
+    def replace(selector, mode = :deep, &replacer)
+      update(source.where(&selector).replace(mode, &replacer))
+    end
+
+    def sanitize
+      update(source.sanitize)
+    end
+
+    def update(node)
+      node.equal?(source) ? self : Fragment.new(node)
     end
 
     def to_plain_text
@@ -48,6 +51,10 @@ module ActionText
 
     def to_html
       @html ||= HtmlConversion.node_to_html(source)
+    end
+
+    def to_node
+      source
     end
 
     def to_s
