@@ -3,7 +3,7 @@
 module ActionText
   class TrixAttachment
     TAG_NAME = "figure"
-    SELECTOR = "[data-trix-attachment]"
+    SELECTOR = ->(node) { node["data-trix-attachment"] }
 
     COMPOSED_ATTRIBUTES = %w( caption presentation )
     ATTRIBUTES = %w( sgid contentType url href filename filesize width height previewable content ) + COMPOSED_ATTRIBUTES
@@ -22,9 +22,10 @@ module ActionText
         trix_attachment_attributes = attributes.except(*COMPOSED_ATTRIBUTES)
         trix_attributes = attributes.slice(*COMPOSED_ATTRIBUTES)
 
-        node = ActionText::HtmlConversion.create_element(TAG_NAME)
-        node["data-trix-attachment"] = JSON.generate(trix_attachment_attributes)
-        node["data-trix-attributes"] = JSON.generate(trix_attributes) if trix_attributes.any?
+        node_attributes = {}
+        node_attributes["data-trix-attachment"] = JSON.generate(trix_attachment_attributes)
+        node_attributes["data-trix-attributes"] = JSON.generate(trix_attributes) if trix_attributes.any?
+        node = ActionText::HtmlConversion.create_element(TAG_NAME, node_attributes)
 
         new(node)
       end
@@ -74,7 +75,9 @@ module ActionText
       end
 
       def read_json_object_attribute(name)
-        read_json_attribute(name) || {}
+        read_json_attribute(name).then do |json_object_attribute|
+          json_object_attribute.is_a?(Hash) ? json_object_attribute : {}
+        end
       end
 
       def read_json_attribute(name)

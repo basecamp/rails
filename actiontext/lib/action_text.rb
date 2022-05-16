@@ -3,7 +3,7 @@
 require "active_support"
 require "active_support/rails"
 
-require "nokogiri"
+require "okra"
 
 module ActionText
   extend ActiveSupport::Autoload
