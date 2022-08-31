@@ -204,7 +204,6 @@ GEM
       http_parser.rb (>= 0.6.0)
     em-socksify (0.3.2)
       eventmachine (>= 1.0.0.beta.4)
-    error_highlight (0.4.0)
     erubi (1.11.0)
     et-orbi (1.2.6)
       tzinfo
@@ -317,7 +316,7 @@ GEM
     mini_magick (4.11.0)
     mini_mime (1.1.2)
     mini_portile2 (2.8.0)
-    minitest (5.16.3)
+    minitest (5.15.0)
     minitest-bisect (1.5.1)
       minitest-server (~> 1.0)
       path_expander (~> 1.1)
@@ -378,7 +377,7 @@ GEM
       pg (>= 1.1, < 2.0)
     raabro (1.4.0)
     racc (1.6.0)
-    rack (2.2.3)
+    rack (2.2.4)
     rack-cache (1.13.0)
       rack (>= 0.4)
     rack-protection (2.1.0)
@@ -571,7 +570,6 @@ DEPENDENCIES
   debug (>= 1.1.0)
   delayed_job
   delayed_job_active_record
-  error_highlight (>= 0.4.0)
   google-cloud-storage (~> 1.11)
   image_processing (~> 1.2)
   importmap-rails
@@ -579,7 +577,7 @@ DEPENDENCIES
   json (>= 2.0.0)
   libxml-ruby
   listen (~> 3.3)
-  minitest (>= 5.15.0)
+  minitest (>= 5.15.0, < 5.16)
   minitest-bisect
   minitest-ci
   minitest-retry
