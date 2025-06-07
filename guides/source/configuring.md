@@ -523,6 +523,15 @@ is `ENV['RAILS_RELATIVE_URL_ROOT']`.
 
 Enables or disables reloading of classes only when tracked files change. By default tracks everything on autoload paths and is set to `true`. If `config.enable_reloading` is `false`, this option is ignored.
 
+#### `config.replication_coordinator`
+
+Set this to configure a custom replication coordinator for your application. A replication
+coordinator provides an interface for active/passive state in a deployment across multiple
+availability zones. See the [`ActiveSupport::ReplicationCoordinator` API
+documentation](https://api.rubyonrails.org/classes/ActiveSupport/ReplicationCoordinator.html).
+
+Defaults to `ActiveSupport::ReplicationCoordinator::SingleZone.new`.
+
 #### `config.require_master_key`
 
 Causes the app to not boot if a master key hasn't been made available through `ENV["RAILS_MASTER_KEY"]` or the `config/master.key` file.
