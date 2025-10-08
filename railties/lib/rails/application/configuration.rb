@@ -23,10 +23,10 @@ module Rails
                     :content_security_policy_nonce_generator, :content_security_policy_nonce_directives,
                     :content_security_policy_nonce_auto,
                     :require_master_key, :credentials, :disable_sandbox, :sandbox_by_default,
-                    :add_autoload_paths_to_load_path, :rake_eager_load, :server_timing, :log_file_size,
+                    :add_autoload_paths_to_load_path, :rake_eager_load, :log_file_size,
                     :dom_testing_default_html_version, :yjit
 
-      attr_reader :encoding, :api_only, :loaded_config_version, :log_level
+      attr_reader :encoding, :api_only, :loaded_config_version, :log_level, :server_timing
 
       def initialize(*)
         super
@@ -416,6 +416,13 @@ module Rails
       end
 
       attr_reader :broadcast_log_level # :nodoc:
+
+      def server_timing=(value)
+        unless [true, false, :runtime_only].include?(value)
+          raise ArgumentError, "`server_timing` must be `true`, `false`, or `:runtime_only`, got: #{value.inspect}"
+        end
+        @server_timing = value
+      end
 
       def debug_exception_response_format
         @debug_exception_response_format || :default

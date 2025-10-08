@@ -546,9 +546,24 @@ for more information and alternative configuration methods.
 
 #### `config.server_timing`
 
-When `true`, adds the [`ServerTiming` middleware](#actiondispatch-servertiming)
-to the middleware stack. Defaults to `false`, but is set to `true` in the
-default generated `config/environments/development.rb` file.
+Controls the [`ServerTiming` middleware](#actiondispatch-servertiming) in the
+middleware stack. Accepts:
+
+* `false` (default) - Middleware is disabled
+* `true` - Enables detailed timing with per-event metrics (suitable for development)
+* `:runtime_only` - Enables simple timing with total request time only (suitable for production)
+
+The default generated `config/environments/development.rb` file sets this to `true`.
+
+For production use, consider using `:runtime_only` mode:
+
+```ruby
+config.server_timing = :runtime_only
+```
+
+This mode converts the `X-Runtime` header (set by `Rack::Runtime`) to a `Server-Timing`
+header with the format `total;dur=XX.XX`. This avoids the overhead of tracking individual
+events while still providing valuable performance metrics.
 
 #### `config.session_options`
 
@@ -792,6 +807,16 @@ Adds the [`Server-Timing`][] header to the response, which includes performance
 metrics from the server. This data can be viewed by inspecting the response in
 the Network panel of the browser's Developer Tools. Most browsers provide a
 Timing tab that visualizes the data.
+
+This middleware supports two modes:
+
+* **Detailed mode** (`config.server_timing = true`): Tracks all ActiveSupport::Notifications
+  events and reports timing for each event type. Suitable for development where detailed
+  performance insights are valuable.
+
+* **Runtime-only mode** (`config.server_timing = :runtime_only`): Converts the `X-Runtime` header to
+  `Server-Timing` format, reporting only total request processing time. This is more suitable
+  for production as it has minimal overhead and doesn't expose internal implementation details.
 
 [`Server-Timing`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server-Timing
 

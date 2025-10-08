@@ -119,6 +119,69 @@ class ServerTimingTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "runtime_only mode converts X-Runtime to Server-Timing header" do
+    # Simulate Rack::Runtime setting the X-Runtime header
+    app = Rack::Lint.new(
+      ActionDispatch::ServerTiming.new(
+        Rack::Lint.new(->(_env) { [200, { "x-runtime" => "0.123456" }, ["ok"]] }),
+        :runtime_only
+      )
+    )
+
+    env = Rack::MockRequest.env_for("/")
+    status, headers, body = app.call(env)
+
+    assert_equal 200, status
+    # X-Runtime is in seconds, Server-Timing should be in milliseconds
+    assert_equal "total;dur=123.46", headers[@header_name]
+  end
+
+  test "runtime_only mode does nothing if X-Runtime header is missing" do
+    app = Rack::Lint.new(
+      ActionDispatch::ServerTiming.new(
+        Rack::Lint.new(->(_env) { [200, {}, ["ok"]] }),
+        :runtime_only
+      )
+    )
+
+    env = Rack::MockRequest.env_for("/")
+    status, headers, body = app.call(env)
+
+    assert_equal 200, status
+    assert_nil headers[@header_name]
+  end
+
+  test "runtime_only mode appends to existing Server-Timing header" do
+    app = Rack::Lint.new(
+      ActionDispatch::ServerTiming.new(
+        Rack::Lint.new(->(_env) {
+          [200, {
+            ActionDispatch::Constants::SERVER_TIMING => "custom;dur=100",
+            "x-runtime" => "0.05"
+          }, ["ok"]]
+        }),
+        :runtime_only
+      )
+    )
+
+    env = Rack::MockRequest.env_for("/")
+    status, headers, body = app.call(env)
+
+    assert_equal 200, status
+    assert_equal "custom;dur=100, total;dur=50.00", headers[@header_name]
+  end
+
+  test "runtime_only mode does not subscribe to notifications" do
+    # Create middleware with runtime_only mode
+    middleware = ActionDispatch::ServerTiming.new(
+      ->(_env) { [200, {}, ["ok"]] },
+      :runtime_only
+    )
+
+    # Ensure subscriber is not initialized in runtime_only mode
+    assert_nil middleware.instance_variable_get(:@subscriber)
+  end
+
   private
     def app
       @app ||= self.class.build_app do |middleware|

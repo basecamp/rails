@@ -5154,6 +5154,40 @@ module ApplicationTests
       assert_not output.include?("Processing by Rails::WelcomeController#index as HTML")
     end
 
+    test "server_timing must be true, false, or :runtime_only" do
+      add_to_config <<-RUBY
+        config.server_timing = true
+      RUBY
+      app "development"
+      assert_equal true, Rails.application.config.server_timing
+
+      remove_from_config '.*config\.server_timing.*'
+      add_to_config <<-RUBY
+        config.server_timing = false
+      RUBY
+      app "development"
+      assert_equal false, Rails.application.config.server_timing
+
+      remove_from_config '.*config\.server_timing.*'
+      add_to_config <<-RUBY
+        config.server_timing = :runtime_only
+      RUBY
+      app "development"
+      assert_equal :runtime_only, Rails.application.config.server_timing
+    end
+
+    test "server_timing raises ArgumentError for invalid values" do
+      add_to_config <<-RUBY
+        config.server_timing = :invalid
+      RUBY
+
+      error = assert_raise(ArgumentError) do
+        app "development"
+      end
+      assert_match(/`server_timing` must be `true`, `false`, or `:runtime_only`/, error.message)
+      assert_match(/:invalid/, error.message)
+    end
+
     private
       def set_custom_config(contents, config_source = "custom".inspect)
         app_file "config/custom.yml", contents

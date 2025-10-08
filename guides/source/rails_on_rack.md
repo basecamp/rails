@@ -244,6 +244,8 @@ Much of Action Controller's functionality is implemented as Middlewares. The fol
 **`ActionDispatch::ServerTiming`**
 
 * Sets a [`Server-Timing`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server-Timing) header containing performance metrics for the request.
+* Supports detailed mode (per-event timing for development) and runtime-only mode (total time only for production).
+* Controlled by `config.server_timing` (can be `false`, `true`, or `:runtime_only`).
 
 **`ActiveSupport::Cache::Strategy::LocalCache::Middleware`**
 
