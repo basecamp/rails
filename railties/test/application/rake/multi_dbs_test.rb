@@ -106,7 +106,7 @@ module ApplicationTests
             assert_match(/CREATE TABLE (?:IF NOT EXISTS )?"dogs"/, schema_dump_animals)
           end
 
-          rails "db:schema:load"
+          rails "db:drop", "db:create", "db:schema:load"
 
           ar_tables = lambda { rails("runner", "p ActiveRecord::Base.lease_connection.tables.sort").strip }
           animals_tables = lambda { rails("runner", "p AnimalsBase.lease_connection.tables.sort").strip }
@@ -146,7 +146,7 @@ module ApplicationTests
             end
           end
 
-          rails "db:schema:load:#{database}"
+          rails "db:drop:#{database}", "db:create:#{database}", "db:schema:load:#{database}"
 
           ar_tables = lambda { rails("runner", "p ActiveRecord::Base.lease_connection.tables.sort").strip }
           animals_tables = lambda { rails("runner", "p AnimalsBase.lease_connection.tables.sort").strip }
@@ -507,6 +507,45 @@ module ApplicationTests
           assert_nothing_raised do
             rails("db:schema:load:animals", "foo")
           end
+        end
+      end
+
+      test "db:schema:load:name doesn't purge the test database. The test schema is maintained when running tests" do
+        require "#{app_path}/config/environment"
+        Dir.chdir(app_path) do
+          generate_models_for_animals
+
+          File.open("test/models/dog_test.rb", "w") do |file|
+            file.write(<<~EOS)
+              require "test_helper"
+
+              class DogTest < ActiveSupport::TestCase
+                test "Dog name type" do
+                  puts Dog.type_for_attribute(:name).type
+                end
+              end
+            EOS
+          end
+
+          rails("db:migrate:primary", "db:migrate:animals")
+
+          development_runner_output = rails("runner", "puts Dog.type_for_attribute(:name).type")
+          assert_match(/string/, development_runner_output)
+
+          test_output = rails("test", "test/models/dog_test.rb")
+          assert_match(/string/, test_output)
+
+          # Simulate a schema change
+          content = File.read("db/animals_schema.rb")
+          content.gsub!(/t\.string "name"/, "t.text \"name\"")
+          File.write("db/animals_schema.rb", content)
+
+          rails("db:schema:load:animals")
+          development_runner_output = rails("runner", "puts Dog.type_for_attribute(:name).type")
+          assert_match(/text/, development_runner_output)
+
+          test_output = rails("test", "test/models/dog_test.rb")
+          assert_match(/text/, test_output)
         end
       end
 
@@ -990,6 +1029,38 @@ module ApplicationTests
         require "#{app_path}/config/environment"
         ActiveRecord::Base.configurations.configs_for(env_name: Rails.env).each do |db_config|
           db_reset_namespaced db_config.name, db_config.database
+        end
+      end
+
+      test "db:migrate:reset:primary regenerates the schema from migrations" do
+        require "#{app_path}/config/environment"
+        Dir.chdir(app_path) do
+          generate_models_for_animals
+          rails "db:migrate"
+          assert_not File.read("db/schema.rb").include?("director")
+
+
+          primary_mtime = File.mtime("db/schema.rb")
+          animals_mtime = File.mtime("db/animals_schema.rb")
+
+          app_file "db/migrate/02_create_movies.rb", <<-MIGRATION
+            class CreateMovies < ActiveRecord::Migration::Current
+              create_table(:movies) { |t| t.string :director }
+            end
+          MIGRATION
+
+          app_file "db/animals_migrate/02_new_animals.rb", <<-MIGRATION
+            class NewAnimals < ActiveRecord::Migration::Current
+              create_table(:cats) {}
+            end
+          MIGRATION
+
+          rails "db:migrate:reset:primary"
+
+          assert File.read("db/schema.rb").include?("director")
+          assert File.mtime("db/schema.rb") > primary_mtime
+          assert_equal animals_mtime, File.mtime("db/animals_schema.rb")
+          assert_not File.read("db/animals_schema.rb").include?("cats")
         end
       end
 

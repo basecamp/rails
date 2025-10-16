@@ -10,12 +10,17 @@ module ActiveStorage
   # Wraps the Google Cloud Storage as an Active Storage service. See ActiveStorage::Service for the generic API
   # documentation that applies to all services.
   class Service::GCSService < Service
+    attr_reader :client, :bucket
     class MetadataServerError < ActiveStorage::Error; end
     class MetadataServerNotFoundError < ActiveStorage::Error; end
 
     def initialize(public: false, **config)
-      @config = config
+      @client = Google::Cloud::Storage.new(**config.except(:bucket, :cache_control, :iam, :gsa_email))
+      @bucket = @client.bucket(config.fetch(:bucket), skip_lookup: true)
+
       @public = public
+
+      @config = config
     end
 
     def upload(key, io, checksum: nil, content_type: nil, disposition: nil, filename: nil, custom_metadata: {})
@@ -188,14 +193,6 @@ module ActiveStorage
         end
       end
 
-      def bucket
-        @bucket ||= client.bucket(config.fetch(:bucket), skip_lookup: true)
-      end
-
-      def client
-        @client ||= Google::Cloud::Storage.new(**config.except(:bucket, :cache_control, :iam, :gsa_email))
-      end
-
       def issuer
         @issuer ||= @config[:gsa_email].presence || email_from_metadata_server
       end
@@ -213,8 +210,16 @@ module ActiveStorage
         lambda do |string_to_sign|
           iam_client = Google::Apis::IamcredentialsV1::IAMCredentialsService.new
 
-          scopes = ["https://www.googleapis.com/auth/iam"]
-          iam_client.authorization = Google::Auth.get_application_default(scopes)
+          # We explicitly do not set iam_client.authorization so that it uses the
+          # credentials set by the application at Google::Apis::RequestOptions.default.authorization.
+          # If the application does not set it, the GCP libraries will automatically
+          # determine it on each call. This code previously explicitly set the
+          # authorization to Google::Auth.get_application_default which triggers
+          # an explicit call to the metadata server - given this lambda is called
+          # for a significant number of file operations, it can lead to considerable
+          # tail latencies and even metadata server overloads. Additionally, that
+          # prevented applications from being able to configure the credentials
+          # used to perform the signature operation.
 
           request = Google::Apis::IamcredentialsV1::SignBlobRequest.new(
             payload: string_to_sign

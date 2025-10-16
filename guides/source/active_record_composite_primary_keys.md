@@ -36,7 +36,7 @@ You can create a table with a composite primary key by passing the
 `:primary_key` option to `create_table` with an array value:
 
 ```ruby
-class CreateProducts < ActiveRecord::Migration[8.1]
+class CreateProducts < ActiveRecord::Migration[8.2]
   def change
     create_table :products, primary_key: [:store_id, :sku] do |t|
       t.integer :store_id
@@ -268,7 +268,7 @@ class BooksController < ApplicationController
     id = params.extract_value(:id)
     # Find the book using the composite ID.
     @book = Book.find(id)
-    # use the default rendering behaviour to render the show view.
+    # use the default rendering behavior to render the show view.
   end
 end
 ```

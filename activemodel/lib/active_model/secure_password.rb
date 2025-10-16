@@ -9,6 +9,8 @@ module ActiveModel
     # Hence need to put a restriction on password length.
     MAX_PASSWORD_LENGTH_ALLOWED = 72
 
+    DEFAULT_RESET_TOKEN_EXPIRES_IN = 15.minutes
+
     class << self
       attr_accessor :min_cost # :nodoc:
     end
@@ -39,9 +41,14 @@ module ActiveModel
       # <tt>validations: false</tt> as an argument. This allows complete
       # customizability of validation behavior.
       #
-      # Finally, a password reset token that's valid for 15 minutes after issue
-      # is automatically configured when +reset_token+ is set to true (which it is by default)
+      # A password reset token (valid for 15 minutes by default) is automatically
+      # configured when +reset_token+ is set to true (which it is by default)
       # and the object responds to +generates_token_for+ (which Active Records do).
+      #
+      # Finally, the reset token expiry can be customized by passing a hash to
+      # +has_secure_password+:
+      #
+      #   has_secure_password reset_token: { expires_in: 1.hour }
       #
       # To use +has_secure_password+, add bcrypt (~> 3.1.7) to your Gemfile:
       #
@@ -155,12 +162,17 @@ module ActiveModel
             end
           end
 
-          validates_confirmation_of attribute, allow_blank: true
+          validates_confirmation_of attribute, allow_nil: true
         end
 
         # Only generate tokens for records that are capable of doing so (Active Records, not vanilla Active Models)
         if reset_token && respond_to?(:generates_token_for)
-          generates_token_for :"#{attribute}_reset", expires_in: 15.minutes do
+          reset_token_expires_in = reset_token.is_a?(Hash) ? reset_token[:expires_in] : DEFAULT_RESET_TOKEN_EXPIRES_IN
+
+          silence_redefinition_of_method(:"#{attribute}_reset_token_expires_in")
+          define_method(:"#{attribute}_reset_token_expires_in") { reset_token_expires_in }
+
+          generates_token_for :"#{attribute}_reset", expires_in: reset_token_expires_in do
             public_send(:"#{attribute}_salt")&.last(10)
           end
 
@@ -228,4 +240,6 @@ module ActiveModel
       end
     end
   end
+
+  ActiveSupport.run_load_hooks(:active_model_secure_password, SecurePassword)
 end

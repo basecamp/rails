@@ -135,10 +135,14 @@ module ActiveRecord
 
         def extract_attribute(node)
           attr_node = nil
-          Arel.fetch_attribute(node) do |attr|
-            return if attr_node&.!= attr # all attr nodes should be the same
+
+          valid_attrs = Arel.fetch_attribute(node) do |attr|
+            !attr_node || attr_node == attr # all attr nodes should be the same
+          ensure
             attr_node = attr
           end
+          return unless valid_attrs # all nested nodes should yield an attribute
+
           attr_node
         end
 
@@ -172,6 +176,8 @@ module ActiveRecord
         end
 
         def except_predicates(columns)
+          return predicates if columns.empty?
+
           attrs = columns.extract! { |node| node.is_a?(Arel::Attribute) }
           non_attrs = columns.extract! { |node| node.is_a?(Arel::Predications) }
 

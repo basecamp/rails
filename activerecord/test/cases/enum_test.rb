@@ -87,6 +87,11 @@ class EnumTest < ActiveRecord::TestCase
   test "find via negative scope" do
     assert Book.not_published.exclude?(@book)
     assert Book.not_proposed.include?(@book)
+
+    # Should include records with nils in the column.
+    rfr = books(:rfr)
+    rfr.update!(status: nil)
+    assert Book.not_published.include?(rfr)
   end
 
   test "find via where with values" do
@@ -581,6 +586,22 @@ class EnumTest < ActiveRecord::TestCase
         end
       end
       assert_match(/You tried to define an enum named .* on the model/, e.message)
+    end
+  end
+
+  test "conflict message grammar" do
+    conflicts = {
+      column: /will generate a class method/,
+      logger: /will generate an instance method/,
+    }
+
+    conflicts.each do |name, pattern|
+      assert_raises(ArgumentError, match: pattern) do
+        Class.new(ActiveRecord::Base) do
+          self.table_name = "books"
+          enum name, [:value]
+        end
+      end
     end
   end
 

@@ -90,7 +90,7 @@ Please refer to the [Changelog][railties] for detailed changes.
 *   Deprecate requiring `"rails/console/methods"`.
 
 *   Deprecate modifying `STATS_DIRECTORIES` in favor of
-    `Rails::CodeStatistics.registery_directory`.
+    `Rails::CodeStatistics.register_directory`.
 
 *   Deprecate `bin/rake stats` in favor of `bin/rails stats`.
 
@@ -123,6 +123,9 @@ Please refer to the [Changelog][action-pack] for detailed changes.
 *   Deprecate drawing routes with multiple paths to make routing faster.
 
 ### Notable changes
+
+*   Introduce safer, more explicit params handling method with [`params#expect`](https://api.rubyonrails.org/classes/ActionController/Parameters.html#method-i-expect) such that
+    `params.expect(table: [ :attr ])` replaces `params.require(:table).permit(:attr)`.
 
 Action View
 -----------
@@ -183,7 +186,10 @@ Please refer to the [Changelog][active-record] for detailed changes.
 ### Notable changes
 
 *   Running `db:migrate` on a fresh database now loads the schema before running
-    migrations. (The previous behavior is available as `db:migrate:reset`)
+    migrations. Subsequent calls will run pending migrations.
+    (If you need the previous behavior of running migrations from scratch instead of loading the 
+    schema file, this can be done by running `db:migrate:reset` which 
+    _will drop and recreate the database before running migrations_)
 
 Active Storage
 --------------

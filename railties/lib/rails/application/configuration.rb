@@ -24,7 +24,7 @@ module Rails
                     :content_security_policy_nonce_auto,
                     :require_master_key, :credentials, :disable_sandbox, :sandbox_by_default,
                     :add_autoload_paths_to_load_path, :rake_eager_load, :server_timing, :log_file_size,
-                    :dom_testing_default_html_version, :yjit
+                    :dom_testing_default_html_version, :yjit, :replication_coordinator
 
       attr_reader :encoding, :api_only, :loaded_config_version, :log_level
 
@@ -85,6 +85,7 @@ module Rails
         @server_timing                           = false
         @dom_testing_default_html_version        = :html4
         @yjit                                    = false
+        @replication_coordinator                 = ActiveSupport::ReplicationCoordinator::SingleZone.new
       end
 
       # Loads default configuration values for a target version. This includes
@@ -115,10 +116,6 @@ module Rails
           if respond_to?(:action_controller)
             action_controller.per_form_csrf_tokens = true
             action_controller.forgery_protection_origin_check = true
-          end
-
-          if respond_to?(:active_support)
-            active_support.to_time_preserves_timezone = :offset
           end
 
           if respond_to?(:active_record)
@@ -267,7 +264,7 @@ module Rails
           end
 
           if respond_to?(:action_controller)
-            action_controller.raise_on_open_redirects = true
+            action_controller.action_on_open_redirect = :raise
             action_controller.wrap_parameters_by_default = true
           end
         when "7.1"
@@ -339,10 +336,6 @@ module Rails
         when "8.0"
           load_defaults "7.2"
 
-          if respond_to?(:active_support)
-            active_support.to_time_preserves_timezone = :zone
-          end
-
           if respond_to?(:action_dispatch)
             action_dispatch.strict_freshness = true
           end
@@ -358,7 +351,26 @@ module Rails
 
           if respond_to?(:action_controller)
             action_controller.escape_json_responses = false
+            action_controller.action_on_path_relative_redirect = :raise
           end
+
+          if respond_to?(:active_record)
+            active_record.raise_on_missing_required_finder_order_columns = true
+          end
+
+          if respond_to?(:active_support)
+            active_support.escape_js_separators_in_json = false
+          end
+
+          if respond_to?(:action_view)
+            action_view.render_tracker = :ruby
+          end
+
+          if respond_to?(:action_view)
+            action_view.remove_hidden_field_autocomplete = true
+          end
+        when "8.2"
+          load_defaults "8.1"
         else
           raise "Unknown version #{target_version.to_s.inspect}"
         end

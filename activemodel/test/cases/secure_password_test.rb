@@ -3,6 +3,7 @@
 require "cases/helper"
 require "models/user"
 require "models/pilot"
+require "models/slow_pilot"
 require "models/visitor"
 
 class SecurePasswordTest < ActiveModel::TestCase
@@ -14,6 +15,7 @@ class SecurePasswordTest < ActiveModel::TestCase
     @user = User.new
     @visitor = Visitor.new
     @pilot = Pilot.new
+    @slow_pilot = SlowPilot.new
 
     # Simulate loading an existing user from the DB
     @existing_user = User.new
@@ -104,6 +106,14 @@ class SecurePasswordTest < ActiveModel::TestCase
     assert_equal ["doesn't match Password"], @user.errors[:password_confirmation]
   end
 
+  test "create a new user with validation, a spaces only password, and an incorrect password confirmation" do
+    @user.password = " "
+    @user.password_confirmation = "something else"
+    assert_not @user.valid?(:create), "user should be invalid"
+    assert_equal 1, @user.errors.count
+    assert_equal ["doesn't match Password"], @user.errors[:password_confirmation]
+  end
+
   test "resetting password to nil clears the password cache" do
     @user.password = "password"
     @user.password = nil
@@ -173,6 +183,14 @@ class SecurePasswordTest < ActiveModel::TestCase
 
   test "updating an existing user with validation and an incorrect password confirmation" do
     @existing_user.password = "password"
+    @existing_user.password_confirmation = "something else"
+    assert_not @existing_user.valid?(:update), "user should be invalid"
+    assert_equal 1, @existing_user.errors.count
+    assert_equal ["doesn't match Password"], @existing_user.errors[:password_confirmation]
+  end
+
+  test "updating an existing user with validation, a spaces only password, and an incorrect password confirmation" do
+    @existing_user.password = " "
     @existing_user.password_confirmation = "something else"
     assert_not @existing_user.valid?(:update), "user should be invalid"
     assert_equal 1, @existing_user.errors.count
@@ -323,5 +341,10 @@ class SecurePasswordTest < ActiveModel::TestCase
 
     assert_equal "finding-for-password_reset-by-999", Pilot.find_by_password_reset_token("999")
     assert_equal "finding-for-password_reset-by-999!", Pilot.find_by_password_reset_token!("999")
+  end
+
+  test "password reset token duration" do
+    assert_equal "password_reset-token-3600", @slow_pilot.password_reset_token
+    assert_equal 1.hour, @slow_pilot.password_reset_token_expires_in
   end
 end
