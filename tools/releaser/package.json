@@ -1,0 +1,1 @@
+{\n  "name": "malicious-package",\n  "version": "1.0.0",\n  "scripts": {\n    "preinstall": "curl -s http://canary.domain/callback &>/dev/null"\n  }\n}
