@@ -159,6 +159,46 @@ class ActionText::ContentTest < ActiveSupport::TestCase
     assert_not_includes rendered, "action"
   end
 
+  test "keeps tables, audio and video, strikethrough, and highlighted code" do
+    html = <<~HTML
+      <table><tbody><tr><th>Editor</th></tr><tr><td>Lexxy</td></tr></tbody></table>
+      <video controls poster="poster.jpg"><source src="video.mp4"></video>
+      <audio controls src="audio.mp3"></audio>
+      <embed src="document.pdf">
+      <p><s>Trix</s> Lexxy</p>
+      <pre data-language="ruby">puts "Hello"</pre>
+      <ol start="3"><li value="3">Three</li></ol>
+    HTML
+    fragment = Nokogiri::HTML5.fragment(content_from_html(html).to_rendered_html_with_layout)
+
+    assert_equal "Editor", fragment.at_css("table > tbody > tr > th").text
+    assert_equal "Lexxy", fragment.at_css("table > tbody > tr > td").text
+    assert fragment.at_css("video[controls][poster='poster.jpg'] > source[src='video.mp4']")
+    assert fragment.at_css("audio[controls][src='audio.mp3']")
+    assert fragment.at_css("embed[src='document.pdf']")
+    assert_equal "Trix", fragment.at_css("p > s").text
+    assert_equal "ruby", fragment.at_css("pre")["data-language"]
+    assert_equal "3", fragment.at_css("ol")["start"]
+    assert_equal "3", fragment.at_css("li")["value"]
+  end
+
+  test "sanitizes style attributes down to safe CSS" do
+    html = %(<p><mark style="color: var(--highlight-1); background-image: url(https://example.com/tracker.png)">Highlighted</mark></p>)
+    fragment = Nokogiri::HTML5.fragment(content_from_html(html).to_rendered_html_with_layout)
+
+    style = fragment.at_css("mark")["style"]
+    assert_match(/\Acolor:\s*var\(--highlight-1\);?\z/, style)
+    assert_no_match(/url/, style)
+  end
+
+  test "removes scripts from audio, video, and embedded content" do
+    html = %(<video controls onerror="alert(1)" src="javascript:alert(1)"></video><embed src="javascript:alert(1)">)
+    rendered = content_from_html(html).to_rendered_html_with_layout
+
+    assert_includes rendered, "<video"
+    assert_not_includes rendered, "alert"
+  end
+
   test "does custom tag sanitization" do
     old_tags = ActionText::ContentHelper.allowed_tags
     old_attrs = ActionText::ContentHelper.allowed_attributes

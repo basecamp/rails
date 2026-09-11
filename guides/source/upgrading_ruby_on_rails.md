@@ -124,12 +124,18 @@ config.action_text.editor = :trix
 
 To switch an existing application to Lexxy:
 
-1. Add the `lexxy` gem, which provides the editor's JavaScript and stylesheets.
+1. Add `gem "lexxy"` to your Gemfile. Action Text already depends on it, and listing it loads the editor's JavaScript and stylesheets.
 2. Replace the `trix` and `@rails/actiontext` JavaScript imports with Lexxy's, as described in [Lexxy's installation instructions](https://lexxy.dev/docs/).
 3. Uncomment `Rails.application.config.action_text.editor = :lexxy` in `config/initializers/new_framework_defaults_8_2.rb`.
 4. Change the `trix-content` class to `lexxy-content` in `app/views/layouts/action_text/contents/_content.html.erb`, so rendered rich text uses Lexxy's styles.
 
 Stored rich text does not need migrating. Action Text renders stored content without involving the editor, and attachments are stored as `<action-text-attachment>` elements whichever editor created them, so existing records keep rendering. Lexxy loads content saved by Trix. A record saved from Lexxy uses Lexxy's markup, such as `<p>` paragraphs where Trix writes `<div>` and `<br>` elements. Trix can still load that content if you switch back.
+
+### Action Text allows tables, audio and video, and highlighted code in content
+
+Action Text's sanitizer now keeps the `table`, `tbody`, `tr`, `th`, `td`, `audio`, `video`, `source`, `embed`, and `s` elements, and the `controls`, `poster`, `data-language`, `start`, `style`, and `value` attributes, which rich text editors like Lexxy produce. `style` attributes are still reduced to safe CSS. This applies to every application, whichever editor it uses.
+
+Content saved with Trix doesn't use these elements and attributes, so it renders as before. Content that reached your database some other way, such as through an API, may now render elements that were previously removed. Applications that set `ActionText::ContentHelper.allowed_tags` or `ActionText::ContentHelper.allowed_attributes` keep their own lists.
 
 Upgrading from Rails 8.0 to Rails 8.1
 -------------------------------------

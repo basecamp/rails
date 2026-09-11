@@ -4,7 +4,8 @@
 
 module ActionText
   module SystemTestHelper
-    # Locates a Trix editor and fills it in with the given HTML.
+    # Locates a rich text editor, such as Lexxy or Trix, and fills it in with the
+    # given HTML.
     #
     # The editor can be found by:
     #
@@ -34,12 +35,26 @@ module ActionText
     #     # <input id="trix_input_1" name="message[content]" type="hidden">
     #     # <trix-editor input="trix_input_1"></trix-editor>
     #     fill_in_rich_textarea "message[content]", with: "Hello <em>world!</em>"
+    #
+    #     # <lexxy-editor name="message[content]" ...></lexxy-editor>
+    #     fill_in_rich_textarea "message[content]", with: "Hello <em>world!</em>"
+    #
+    # Editors like Lexxy render their editable content inside the editor element.
+    # When the editable content isn't a custom element itself, the editor is also
+    # matched by the attributes of its closest custom element, and filled in
+    # through that element's `value`.
     def fill_in_rich_textarea(locator = nil, with:, **)
       find(:rich_textarea, locator, **).execute_script(<<~JS, with.to_s)
-        if ("value" in this) {
-          this.value = arguments[0]
+        let editorElement = this
+
+        while (editorElement && !("value" in editorElement) && !editorElement.editor) {
+          editorElement = editorElement.parentElement
+        }
+
+        if ("value" in editorElement) {
+          editorElement.value = arguments[0]
         } else {
-          this.editor.loadHTML(arguments[0])
+          editorElement.editor.loadHTML(arguments[0])
         }
       JS
     end
@@ -61,13 +76,18 @@ end
       else
         input_located_by_name = XPath.anywhere(:input).where(XPath.attr(:name) == locator).attr(:id)
         input_located_by_label = XPath.anywhere(:label).where(XPath.string.n.is(locator)).attr(:for)
+        editor_element = XPath.ancestor[XPath.local_name.contains("-")][1]
 
-        xpath.where \
-          XPath.attr(:id).equals(locator) |
-          XPath.attr(:placeholder).equals(locator) |
-          XPath.attr(:"aria-label").equals(locator) |
-          XPath.attr(:input).equals(input_located_by_name) |
+        located = [
+          XPath.attr(:id).equals(locator),
+          XPath.attr(:name).equals(locator),
+          XPath.attr(:placeholder).equals(locator),
+          XPath.attr(:"aria-label").equals(locator),
+          XPath.attr(:input).equals(input_located_by_name),
           XPath.attr(:id).equals(input_located_by_label)
+        ].reduce(:|)
+
+        xpath.where located | (!XPath.local_name.contains("-") & editor_element.where(located))
       end
     end
   end

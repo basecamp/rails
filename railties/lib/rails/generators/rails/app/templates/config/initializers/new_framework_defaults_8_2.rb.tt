@@ -123,8 +123,10 @@
 # Use Lexxy as the Action Text editor instead of Trix.
 #
 # `rich_textarea` renders a `<lexxy-editor>` element in place of `<trix-editor>`.
-# Lexxy's JavaScript and stylesheets are provided by the `lexxy` gem, so add it
-# and import it in your JavaScript entrypoint before enabling this setting.
+# Lexxy's JavaScript and stylesheets are provided by the `lexxy` gem. Before
+# enabling this setting, add it to your Gemfile and set up its JavaScript for
+# import maps or your JavaScript bundler, as described in
+# https://lexxy.dev/docs/.
 #
 # Stored rich text does not need migrating. Lexxy loads content saved by Trix.
 #

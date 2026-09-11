@@ -3922,7 +3922,7 @@ The default value depends on the `config.load_defaults` target version:
 | (original)            | `:trix`              |
 | 8.2                   | `:lexxy`             |
 
-The JavaScript and stylesheets for Lexxy are provided by the [`lexxy`](https://github.com/basecamp/lexxy) gem, which `bin/rails action_text:install` adds to applications that use Lexxy. Trix is provided by the `action_text-trix` gem, which Action Text depends on. See [Upgrading from Rails 8.1 to Rails 8.2](upgrading_ruby_on_rails.html#lexxy-is-the-default-action-text-editor) for switching an existing application.
+Lexxy's JavaScript and stylesheets are provided by the [`lexxy`](https://github.com/basecamp/lexxy) gem, and Trix's by the `action_text-trix` gem. Action Text depends on both. Applications that use Lexxy also list `lexxy` in their Gemfile so it's loaded, which `bin/rails action_text:install` does for them. See [Upgrading from Rails 8.1 to Rails 8.2](upgrading_ruby_on_rails.html#lexxy-is-the-default-action-text-editor) for switching an existing application.
 
 #### `config.action_text.sanitizer_vendor`
 

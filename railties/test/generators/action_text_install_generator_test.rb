@@ -2,6 +2,7 @@
 
 require "generators/generators_test_helper"
 require "generators/action_text/install/install_generator"
+require "action_text/engine"
 
 class ActionText::Generators::InstallGeneratorTest < Rails::Generators::TestCase
   include GeneratorsTestHelper
@@ -124,6 +125,33 @@ class ActionText::Generators::InstallGeneratorTest < Rails::Generators::TestCase
     run_generator_instance
     assert_migration "db/migrate/create_active_storage_tables.active_storage.rb"
     assert_migration "db/migrate/create_action_text_tables.action_text.rb"
+  end
+
+  test "installs the editor named by config.action_text.editor" do
+    Rails.application.config.action_text.with(editor: :lexxy) do
+      run_generator_instance
+    end
+
+    assert_includes @bundle_commands, ["add lexxy", {}, { quiet: true }]
+    assert_file "config/importmap.rb", /^pin "lexxy", to: "lexxy.js"$/
+  end
+
+  test "installs the editor passed with --editor over config.action_text.editor" do
+    Rails.application.config.action_text.with(editor: :lexxy) do
+      run_generator_instance ["--editor=trix"]
+    end
+
+    assert_empty @bundle_commands
+    assert_file "config/importmap.rb", /^pin "trix"$/
+  end
+
+  test "refuses to install an editor it can't set up" do
+    Rails.application.config.action_text.with(editor: :custom) do
+      error = assert_raises(Rails::Generators::Error) { run_generator_instance }
+      assert_match %("custom"), error.message
+    end
+
+    assert_no_file "app/assets/stylesheets/actiontext.css"
   end
 
   test "does not add a gem when installing Trix" do

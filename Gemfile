@@ -3,6 +3,9 @@
 source "https://rubygems.org"
 gemspec
 
+# Until a Lexxy release depends on railties instead of rails (basecamp/lexxy#1260).
+gem "lexxy", github: "basecamp/lexxy", branch: "depend-on-railties", require: false
+
 gem "minitest", "~> 6.0"
 gem "minitest-mock"
 

@@ -1,11 +1,38 @@
+*   Allow tables, audio and video, strikethrough, and highlighted code in
+    sanitized Action Text content.
+
+    Rich text editors like Lexxy produce `table`, `tbody`, `tr`, `th`, `td`,
+    `audio`, `video`, `source`, `embed`, and `s` elements, and `controls`,
+    `poster`, `data-language`, `start`, `style`, and `value` attributes, which
+    Action Text used to remove when rendering content. Style attributes are
+    still reduced to safe CSS, which now keeps the `var()` function.
+
+    Content saved with Trix doesn't use these elements and attributes, so it
+    renders as before. Applications that set
+    `ActionText::ContentHelper.allowed_tags` or
+    `ActionText::ContentHelper.allowed_attributes` keep their own lists.
+
+    *Jorge Manrubia*
+
+*   Support Lexxy in `fill_in_rich_textarea`.
+
+    Lexxy renders its editable content inside the `lexxy-editor` element. The
+    system test helper now also locates an editor by the attributes of the
+    custom element around the editable content, and fills it in through that
+    element's `value`.
+
+    *Jorge Manrubia*
+
 *   Make Lexxy the default Action Text editor for new applications.
 
     New applications, and applications that set `config.load_defaults "8.2"`,
     render `rich_textarea` with [Lexxy](https://github.com/basecamp/lexxy)
     instead of Trix. Action Text includes an editor adapter for Lexxy next to
     the Trix one, and `bin/rails action_text:install` installs the editor named
-    by `config.action_text.editor`, or by its new `--editor` option. For Lexxy,
-    it adds the `lexxy` gem, its JavaScript, and its stylesheet.
+    by `config.action_text.editor`, or by its new `--editor` option. Action Text
+    depends on the `lexxy` gem, as it does on `action_text-trix`, and for Lexxy
+    the installer adds it to the Gemfile so it's loaded, along with its
+    JavaScript and stylesheet.
 
     Existing applications keep Trix. To keep it after moving to
     `config.load_defaults "8.2"`, set:

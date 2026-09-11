@@ -239,6 +239,9 @@ Please refer to the [Changelog][action-text] for detailed changes.
     Upgraded applications keep Trix until they set
     `config.action_text.editor = :lexxy` or `config.load_defaults "8.2"`.
 
+*   Action Text's sanitizer allows tables, audio and video, strikethrough, and
+    highlighted code, which rich text editors like Lexxy produce.
+
 Action Mailbox
 ----------
 

@@ -125,6 +125,14 @@ module ActionText
       ActionText::Attachment.tag_name = app.config.action_text.attachment_tag_name
     end
 
+    initializer "action_text.sanitizer" do
+      require "rails-html-sanitizer"
+
+      # Lexxy colors highlighted text with CSS variables, so keep the var()
+      # function when style attributes are sanitized.
+      Loofah::HTML5::SafeList::ALLOWED_CSS_FUNCTIONS.add("var")
+    end
+
     config.after_initialize do |app|
       if klass = app.config.action_text.sanitizer_vendor
         ActiveSupport.on_load(:action_view) do

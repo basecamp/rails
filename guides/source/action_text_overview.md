@@ -69,7 +69,8 @@ $ bin/rails action_text:install
 
 It will do the following:
 
-- Adds the `lexxy` gem, which provides the editor's JavaScript and stylesheets.
+- Adds the `lexxy` gem to the `Gemfile`, so the editor's JavaScript and
+  stylesheets are loaded.
 - Imports Lexxy in `application.js`. With import maps, it pins `lexxy` and
   `@rails/activestorage`. With a JavaScript bundler, it installs the
   `@37signals/lexxy` and `@rails/activestorage` packages instead.

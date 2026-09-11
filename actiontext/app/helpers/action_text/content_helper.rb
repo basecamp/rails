@@ -6,6 +6,11 @@ require "rails-html-sanitizer"
 
 module ActionText
   module ContentHelper
+    # Elements and attributes that rich text editors produce beyond the sanitizer's
+    # defaults: tables, audio and video, strikethrough, and highlighted code.
+    RICH_TEXT_TAGS = %w[ audio embed s source table tbody td th tr video ].freeze
+    RICH_TEXT_ATTRIBUTES = %w[ controls data-language poster start style value ].freeze
+
     mattr_accessor(:sanitizer, default: Rails::HTML4::Sanitizer.safe_list_sanitizer.new)
     mattr_accessor(:allowed_tags)
     mattr_accessor(:allowed_attributes)
@@ -66,11 +71,11 @@ module ActionText
     end
 
     def sanitizer_allowed_tags
-      allowed_tags || (sanitizer.class.allowed_tags + [ ActionText::Attachment.tag_name, "figure", "figcaption" ])
+      allowed_tags || (sanitizer.class.allowed_tags + [ ActionText::Attachment.tag_name, "figure", "figcaption" ] + RICH_TEXT_TAGS)
     end
 
     def sanitizer_allowed_attributes
-      allowed_attributes || (sanitizer.class.allowed_attributes + ActionText::Attachment::ATTRIBUTES)
+      allowed_attributes || (sanitizer.class.allowed_attributes + ActionText::Attachment::ATTRIBUTES + RICH_TEXT_ATTRIBUTES)
     end
   end
 end

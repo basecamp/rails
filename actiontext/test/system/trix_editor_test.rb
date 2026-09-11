@@ -93,6 +93,6 @@ class TrixEditorTest < ApplicationSystemTestCase
   end
 
   def with_editor(editor_name, &block)
-    Rails.configuration.action_text.with(editor: editor_name, &block)
+    ActionText::RichText.with(editor: ActionText::RichText.editors.fetch(editor_name), &block)
   end
 end

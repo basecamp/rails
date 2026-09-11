@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "action_text/editor/lexxy_editor"
 
 module ActionText
   class Editor::LexxyEditorTest < ActionView::TestCase

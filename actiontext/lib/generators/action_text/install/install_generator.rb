@@ -12,10 +12,19 @@ module ActionText
       include Rails::Generators::BundleHelper
       include Rails::Generators::JsPackageManager
 
+      EDITORS = %w[ lexxy trix ].freeze
+
       source_root File.expand_path("templates", __dir__)
 
-      class_option :editor, type: :string, enum: %w[ lexxy trix ],
+      class_option :editor, type: :string, enum: EDITORS,
         desc: "The rich text editor to install. Defaults to config.action_text.editor"
+
+      def check_editor
+        unless EDITORS.include?(editor)
+          raise Rails::Generators::Error, "Can't install the #{editor.inspect} editor named by config.action_text.editor. " \
+            "Pass --editor=lexxy or --editor=trix, or install that editor yourself."
+        end
+      end
 
       def add_editor_gem
         if lexxy? && !gemfile_includes?("lexxy")
@@ -74,16 +83,19 @@ module ActionText
 
       private
         def editor
-          @editor ||= options[:editor] || (lexxy_configured? ? "lexxy" : "trix")
+          @editor ||= options[:editor] || configured_editor
+        end
+
+        def configured_editor
+          if Rails.application.config.respond_to?(:action_text)
+            Rails.application.config.action_text.editor.to_s
+          else
+            "trix"
+          end
         end
 
         def lexxy?
           editor == "lexxy"
-        end
-
-        def lexxy_configured?
-          Rails.application.config.respond_to?(:action_text) &&
-            Rails.application.config.action_text.editor.to_s == "lexxy"
         end
 
         def gemfile_includes?(gem_name)
