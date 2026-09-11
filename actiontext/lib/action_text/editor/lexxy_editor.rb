@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# :markup: markdown
+
 module ActionText
   class Editor::LexxyEditor < Editor # :nodoc:
     def editor_tag(...)
