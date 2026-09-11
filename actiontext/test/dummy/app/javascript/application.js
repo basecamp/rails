@@ -1,5 +1,6 @@
 import "trix"
 import "@rails/actiontext"
+import "lexxy"
 
 addEventListener("click", ({ target }) => {
   if (target.matches(`[data-trix-action~="x-attach"]`)) {

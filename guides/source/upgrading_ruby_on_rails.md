@@ -111,6 +111,57 @@ Book.not_published # => [book2]
 Book.not_published # => [book2, book3]
 ```
 
+### Trix is now an optional dependency
+
+Action Text doesn't depend on `action_text-trix` anymore. If your application uses Trix, make sure to add `action_text-trix` to your Gemfile.
+
+```ruby
+gem "action_text-trix"
+```
+
+This includes applications that load Trix's JavaScript from npm or from a vendored copy. Without the gem, rendering a Trix editor raises an error that explains what to add.
+
+### Action Text loads Lexxy in every application
+
+Action Text now loads the `lexxy` gem in every application, whichever editor it uses. Besides providing the editor:
+
+- An attachment that points at a video URL without a matching record renders as a remote video, instead of as a missing attachment.
+- The JSON for a previewable Active Storage blob includes `previewable` and a preview `url` when URL options are available, which Lexxy's uploads use.
+
+### Lexxy is the default Action Text editor
+
+New Rails 8.2 applications, and applications that set `config.load_defaults "8.2"`, use [Lexxy](https://github.com/basecamp/lexxy) as their Action Text editor instead of [Trix](https://trix-editor.org/). `rich_textarea` renders a `<lexxy-editor>` element in place of `<trix-editor>`.
+
+Upgraded applications keep Trix once they add the `action_text-trix` gem, as described in [Trix is now an optional dependency](#trix-is-now-an-optional-dependency). If your application calls `config.load_defaults` with a version before 8.2, the editor doesn't change. To move `config.load_defaults` to 8.2 and keep Trix, set the editor explicitly:
+
+```ruby
+# config/application.rb
+config.action_text.editor = :trix
+```
+
+If your application already uses Lexxy through the `lexxy` gem, keep it by setting the editor explicitly, or by moving `config.load_defaults` to 8.2. Otherwise the editor falls back to Trix, and rendering it raises an error about the missing `action_text-trix` gem:
+
+```ruby
+# config/application.rb
+config.action_text.editor = :lexxy
+```
+
+Action Text loads the `lexxy` gem, which provides the editor's JavaScript and stylesheets, so there's no gem to add. To switch an existing application to Lexxy:
+
+1. Replace the `trix` and `@rails/actiontext` JavaScript imports with Lexxy's, as described in [Lexxy's installation instructions](https://lexxy.dev/docs/).
+2. Uncomment `Rails.application.config.action_text.editor = :lexxy` in `config/initializers/new_framework_defaults_8_2.rb`.
+3. Change the `trix-content` class to `lexxy-content` in `app/views/layouts/action_text/contents/_content.html.erb`, so rendered rich text uses Lexxy's styles.
+
+Once no page uses Trix anymore, you can remove `action_text-trix` from your Gemfile.
+
+Stored rich text does not need migrating. Action Text renders stored content without involving the editor, and attachments are stored as `<action-text-attachment>` elements whichever editor created them, so existing records keep rendering. Lexxy loads content saved by Trix. A record saved from Lexxy uses Lexxy's markup, such as `<p>` paragraphs where Trix writes `<div>` and `<br>` elements. Trix can still load that content if you switch back.
+
+### Action Text allows tables, audio and video, and highlighted code in content
+
+Action Text's sanitizer now keeps the `table`, `tbody`, `tr`, `th`, `td`, `audio`, `video`, `source`, `embed`, and `s` elements, and the `controls`, `poster`, `data-language`, `start`, `style`, and `value` attributes, which rich text editors like Lexxy produce. `style` attributes are still reduced to safe CSS. This applies to every application, whichever editor it uses.
+
+Content saved with Trix doesn't use these elements and attributes, so it renders as before. Content that reached your database some other way, such as through an API, may now render elements that were previously removed. Applications that set `ActionText::ContentHelper.allowed_tags` or `ActionText::ContentHelper.allowed_attributes` keep their own lists.
+
 Upgrading from Rails 8.0 to Rails 8.1
 -------------------------------------
 

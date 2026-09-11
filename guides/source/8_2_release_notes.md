@@ -225,6 +225,9 @@ Please refer to the [Changelog][action-text] for detailed changes.
 
 ### Removals
 
+*   Remove the `action_text-trix` dependency. Applications that use Trix add
+    `gem "action_text-trix"` to their Gemfile.
+
 ### Deprecations
 
 *   Deprecate Trix-specific classes, modules, and methods:
@@ -234,6 +237,13 @@ Please refer to the [Changelog][action-text] for detailed changes.
     `#to_editor_content_attachment_partial_path` instead).
 
 ### Notable changes
+
+*   Lexxy is the default Action Text editor for new applications, replacing Trix.
+    Upgraded applications keep Trix until they set
+    `config.action_text.editor = :lexxy` or `config.load_defaults "8.2"`.
+
+*   Action Text's sanitizer allows tables, audio and video, strikethrough, and
+    highlighted code, which rich text editors like Lexxy produce.
 
 Action Mailbox
 ----------

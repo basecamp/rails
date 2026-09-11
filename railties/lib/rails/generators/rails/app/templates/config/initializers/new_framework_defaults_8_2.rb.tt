@@ -118,3 +118,19 @@
 # `ArgumentError`, matching the Ruby standard library's `Time.parse`.
 #++
 # ActiveSupport.raise_on_invalid_time_zone_parse = true
+
+###
+# Use Lexxy as the Action Text editor instead of Trix.
+#
+# `rich_textarea` renders a `<lexxy-editor>` element in place of `<trix-editor>`.
+# Lexxy's JavaScript and stylesheets are provided by the `lexxy` gem, which
+# Action Text loads. Before enabling this setting, set up its JavaScript for
+# import maps or your JavaScript bundler, as described in
+# https://lexxy.dev/docs/.
+#
+# Stored rich text does not need migrating. Lexxy loads content saved by Trix.
+#
+# To keep Trix after moving to `config.load_defaults "8.2"`, set
+# `config.action_text.editor = :trix`.
+#++
+# Rails.application.config.action_text.editor = :lexxy

@@ -1554,7 +1554,7 @@ en:
         ActiveStorage::Engine
         ActionCable::Engine
         ActionMailbox::Engine
-        Trix::Engine
+        Lexxy::Engine
         ActionText::Engine
         Bukkits::Engine
         Importmap::Engine

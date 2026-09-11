@@ -3,6 +3,12 @@
 source "https://rubygems.org"
 gemspec
 
+# The Action Text dummy application uses Trix.
+gem "action_text-trix"
+
+# Until a Lexxy release includes basecamp/lexxy#1260, #1261 and #1262.
+gem "lexxy", github: "basecamp/lexxy", branch: "rails-action-text-default"
+
 gem "minitest", "~> 6.0"
 gem "minitest-mock"
 

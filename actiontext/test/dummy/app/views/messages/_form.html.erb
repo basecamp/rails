@@ -16,6 +16,12 @@
     <%= form.text_field :subject %>
   </div>
 
+  <% if ActionText::RichText.editor.editor_name == "lexxy" %>
+    <div class="field">
+      <%= form.label :content, "Message content label" %>
+      <%= form.rich_textarea :content, placeholder: "Your message here", aria: { label: "Message content aria-label" } %>
+    </div>
+  <% else %>
   <div class="field">
     <trix-toolbar id="toolbar">
       <button type="button" tabindex="-1" data-trix-action="attachFiles">Attach Files</button>
@@ -35,6 +41,7 @@
     <%= form.rich_textarea :content, class: "trix-content", toolbar: "toolbar",
           placeholder: "Your message here", aria: { label: "Message content aria-label" } %>
   </div>
+  <% end %>
 
   <div class="actions">
     <%= form.submit %>

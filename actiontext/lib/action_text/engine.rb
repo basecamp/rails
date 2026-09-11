@@ -8,7 +8,7 @@ require "active_record/railtie"
 require "active_storage/engine"
 
 require "action_text"
-require "action_text/trix"
+require "lexxy"
 
 module ActionText
   class Engine < Rails::Engine
@@ -17,6 +17,7 @@ module ActionText
 
     config.action_text = ActiveSupport::OrderedOptions.new
     config.action_text.editors = ActiveSupport::InheritableOptions.new(
+      lexxy: {},
       trix: {}
     )
     config.action_text.editor = :trix
@@ -122,6 +123,14 @@ module ActionText
 
     initializer "action_text.configure" do |app|
       ActionText::Attachment.tag_name = app.config.action_text.attachment_tag_name
+    end
+
+    initializer "action_text.sanitizer" do
+      require "rails-html-sanitizer"
+
+      # Lexxy colors highlighted text with CSS variables, so keep the var()
+      # function when style attributes are sanitized.
+      Loofah::HTML5::SafeList::ALLOWED_CSS_FUNCTIONS.add("var")
     end
 
     config.after_initialize do |app|

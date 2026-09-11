@@ -21,7 +21,7 @@ module ActionText
       #     message.content.to_plain_text # => "Funny times!"
       #
       # The dependent RichText model will also automatically process attachments links
-      # as sent via the Trix-powered editor. These attachments are associated with the
+      # as sent via the rich text editor. These attachments are associated with the
       # RichText model using Active Storage.
       #
       # If you wish to preload the dependent RichText model, you can use the named

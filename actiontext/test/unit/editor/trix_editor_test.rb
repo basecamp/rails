@@ -45,6 +45,17 @@ module ActionText
       assert_equal "message[body]", input["name"]
     end
 
+    test "#editor_tag raises when the action_text-trix gem isn't loaded" do
+      editor = ActionText::Editor::TrixEditor.new
+      trix = Object.send(:remove_const, :Trix)
+
+      error = assert_raises(RuntimeError) { editor.editor_tag(name: "message[body]") }
+      assert_match "Add it to your Gemfile", error.message
+      assert_match "action_text-trix", error.message
+    ensure
+      Object.const_set(:Trix, trix) if trix
+    end
+
     test "#editor_tag forwards the :form to its input element" do
       editor = ActionText::Editor::TrixEditor.new
 

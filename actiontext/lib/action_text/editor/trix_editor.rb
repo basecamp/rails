@@ -11,6 +11,12 @@ module ActionText
     end
 
     def editor_tag(...)
+      unless defined?(::Trix::VERSION)
+        raise "Trix's JavaScript and stylesheets come from the action_text-trix gem, which Action Text no longer depends on. " \
+          "Add it to your Gemfile to keep using Trix, or see " \
+          "https://guides.rubyonrails.org/upgrading_ruby_on_rails.html#lexxy-is-the-default-action-text-editor to switch to Lexxy."
+      end
+
       Tag.new(editor_name, ...)
     end
 

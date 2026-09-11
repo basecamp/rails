@@ -9,6 +9,12 @@ class ActionText::Editor::ConfiguratorTest < ActiveSupport::TestCase
     assert_instance_of ActionText::Editor::TrixEditor, editor
   end
 
+  test "builds a Lexxy editor instance" do
+    configurator = ActionText::Editor::Configurator.new(lexxy: {})
+    editor = configurator.build(:lexxy)
+    assert_instance_of ActionText::Editor::LexxyEditor, editor
+  end
+
   test "raises error when passing non-existent editor name" do
     configurator = ActionText::Editor::Configurator.new({})
     assert_raise RuntimeError do

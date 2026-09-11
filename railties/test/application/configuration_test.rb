@@ -4095,6 +4095,59 @@ module ApplicationTests
       assert_equal "link", ActionText::Attachment.tag_name
     end
 
+    test "config.action_text.editor is :lexxy for new apps" do
+      app "development"
+
+      assert_equal "lexxy", ActionText::RichText.editor.editor_name
+    end
+
+    test "config.action_text.editor can be set to :trix for new apps" do
+      app_file "config/initializers/action_text_editor.rb", <<-RUBY
+        Rails.application.config.action_text.editor = :trix
+      RUBY
+
+      app "development"
+
+      assert_equal "trix", ActionText::RichText.editor.editor_name
+    end
+
+    test "config.action_text.editor is :trix for upgraded apps" do
+      remove_from_config '.*config\.load_defaults.*\n'
+
+      app "development"
+
+      assert_equal "trix", ActionText::RichText.editor.editor_name
+    end
+
+    test "config.action_text.editor is :trix with Rails 8.1 defaults" do
+      remove_from_config '.*config\.load_defaults.*\n'
+      add_to_config 'config.load_defaults "8.1"'
+
+      app "development"
+
+      assert_equal "trix", ActionText::RichText.editor.editor_name
+    end
+
+    test "config.action_text.editor set after config.load_defaults takes precedence" do
+      add_to_config "config.action_text.editor = :trix"
+
+      app "development"
+
+      assert_equal "trix", ActionText::RichText.editor.editor_name
+    end
+
+    test "config.action_text.editor can be set to :lexxy for upgraded apps" do
+      remove_from_config '.*config\.load_defaults.*\n'
+
+      app_file "config/initializers/action_text_editor.rb", <<-RUBY
+        Rails.application.config.action_text.editor = :lexxy
+      RUBY
+
+      app "development"
+
+      assert_equal "lexxy", ActionText::RichText.editor.editor_name
+    end
+
     test "ActionMailbox.logger is Rails.logger by default" do
       app "development"
 
