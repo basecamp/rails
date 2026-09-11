@@ -18,6 +18,13 @@ class ActionText::Generators::InstallGeneratorTest < Rails::Generators::TestCase
 
     FileUtils.mkdir_p("#{destination_root}/config")
     FileUtils.touch("#{destination_root}/config/importmap.rb")
+    File.write("#{destination_root}/config/application.rb", <<~RUBY)
+      module Dummy
+        class Application < Rails::Application
+          config.load_defaults 8.2
+        end
+      end
+    RUBY
   end
 
   teardown do
@@ -132,7 +139,7 @@ class ActionText::Generators::InstallGeneratorTest < Rails::Generators::TestCase
       run_generator_instance
     end
 
-    assert_includes @bundle_commands, ["add lexxy", {}, { quiet: true }]
+    assert_empty @bundle_commands
     assert_file "config/importmap.rb", /^pin "lexxy", to: "lexxy.js"$/
   end
 
@@ -141,8 +148,88 @@ class ActionText::Generators::InstallGeneratorTest < Rails::Generators::TestCase
       run_generator_instance ["--editor=trix"]
     end
 
-    assert_empty @bundle_commands
+    assert_includes @bundle_commands, ["add action_text-trix", {}, { quiet: true }]
     assert_file "config/importmap.rb", /^pin "trix"$/
+  end
+
+  test "sets the editor passed with --editor after config.load_defaults" do
+    run_generator_instance ["--editor=lexxy"]
+
+    assert_file "config/application.rb", /config\.load_defaults 8\.2\n    config\.action_text\.editor = :lexxy\n/
+  end
+
+  test "doesn't set the editor when --editor matches config.action_text.editor" do
+    run_generator_instance ["--editor=trix"]
+
+    assert_file "config/application.rb" do |content|
+      assert_no_match(/action_text\.editor/, content)
+    end
+  end
+
+  test "warns when an initializer also sets config.action_text.editor" do
+    FileUtils.mkdir_p("#{destination_root}/config/initializers")
+    File.write("#{destination_root}/config/initializers/new_framework_defaults_8_2.rb", "Rails.application.config.action_text.editor = :lexxy\n")
+
+    output = Rails.application.config.action_text.with(editor: :lexxy) do
+      run_generator_instance ["--editor=trix"]
+    end
+
+    assert_match "config/initializers/new_framework_defaults_8_2.rb sets config.action_text.editor to something other than :trix", output
+  end
+
+  test "moves an editor setting from before config.load_defaults to after it" do
+    File.write("#{destination_root}/config/application.rb", <<~RUBY)
+      module Dummy
+        class Application < Rails::Application
+          config.action_text.editor = :trix
+          config.load_defaults 8.2
+        end
+      end
+    RUBY
+
+    Rails.application.config.action_text.with(editor: :lexxy) do
+      run_generator_instance ["--editor=trix"]
+    end
+
+    assert_file "config/application.rb" do |content|
+      assert_equal [ "config.action_text.editor = :trix" ], content.scan(/config\.action_text\.editor = :\w+/)
+      assert_match(/config\.load_defaults 8\.2\n    config\.action_text\.editor = :trix\n/, content)
+    end
+  end
+
+  test "warns when a nested initializer sets config.action_text.editor" do
+    FileUtils.mkdir_p("#{destination_root}/config/initializers/editors")
+    File.write("#{destination_root}/config/initializers/editors/action_text.rb", "Rails.application.config.action_text.editor = :lexxy\n")
+
+    output = Rails.application.config.action_text.with(editor: :lexxy) do
+      run_generator_instance ["--editor=trix"]
+    end
+
+    assert_match "config/initializers/editors/action_text.rb sets config.action_text.editor", output
+  end
+
+  test "updates an existing editor setting when switching editors" do
+    File.write("#{destination_root}/config/application.rb", <<~RUBY)
+      module Dummy
+        class Application < Rails::Application
+          config.load_defaults 8.2
+          config.action_text.editor = :trix
+        end
+      end
+    RUBY
+
+    run_generator_instance ["--editor=lexxy"]
+    assert_file "config/application.rb" do |content|
+      assert_equal [ "config.action_text.editor = :lexxy" ], content.scan(/config\.action_text\.editor = :\w+/)
+    end
+
+    @generator = nil
+    Rails.application.config.action_text.with(editor: :lexxy) do
+      run_generator_instance ["--editor=trix"]
+    end
+    assert_file "config/application.rb" do |content|
+      assert_equal [ "config.action_text.editor = :trix" ], content.scan(/config\.action_text\.editor = :\w+/)
+    end
   end
 
   test "refuses to install an editor it can't set up" do
@@ -154,19 +241,19 @@ class ActionText::Generators::InstallGeneratorTest < Rails::Generators::TestCase
     assert_no_file "app/assets/stylesheets/actiontext.css"
   end
 
-  test "does not add a gem when installing Trix" do
+  test "adds the action_text-trix gem when installing Trix" do
+    run_generator_instance ["--editor=trix"]
+    assert_includes @bundle_commands, ["add action_text-trix", {}, { quiet: true }]
+  end
+
+  test "does not add the action_text-trix gem when the Gemfile already includes it" do
+    File.write("#{destination_root}/Gemfile", %(gem "action_text-trix"\n))
+
     run_generator_instance ["--editor=trix"]
     assert_empty @bundle_commands
   end
 
-  test "adds the lexxy gem when installing Lexxy" do
-    run_generator_instance ["--editor=lexxy"]
-    assert_includes @bundle_commands, ["add lexxy", {}, { quiet: true }]
-  end
-
-  test "does not add the lexxy gem when the Gemfile already includes it" do
-    File.write("#{destination_root}/Gemfile", %(gem "lexxy"\n))
-
+  test "does not add a gem when installing Lexxy" do
     run_generator_instance ["--editor=lexxy"]
     assert_empty @bundle_commands
   end

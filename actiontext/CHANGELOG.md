@@ -1,3 +1,15 @@
+*   Remove the `action_text-trix` dependency.
+
+    Trix is no longer installed with Action Text. Applications that use Trix
+    need to add the gem to their Gemfile:
+
+        gem "action_text-trix"
+
+    Rendering a Trix editor without the gem raises an error that says so, and
+    `bin/rails action_text:install --editor=trix` adds the gem.
+
+    *Jorge Manrubia*
+
 *   Allow tables, audio and video, strikethrough, and highlighted code in
     sanitized Action Text content.
 
@@ -30,9 +42,8 @@
     instead of Trix. Action Text includes an editor adapter for Lexxy next to
     the Trix one, and `bin/rails action_text:install` installs the editor named
     by `config.action_text.editor`, or by its new `--editor` option. Action Text
-    depends on the `lexxy` gem, as it does on `action_text-trix`, and for Lexxy
-    the installer adds it to the Gemfile so it's loaded, along with its
-    JavaScript and stylesheet.
+    depends on the `lexxy` gem and loads it, so for Lexxy the installer sets up
+    its JavaScript and stylesheet.
 
     Existing applications keep Trix. To keep it after moving to
     `config.load_defaults "8.2"`, set:

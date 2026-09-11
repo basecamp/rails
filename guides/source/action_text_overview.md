@@ -69,8 +69,6 @@ $ bin/rails action_text:install
 
 It will do the following:
 
-- Adds the `lexxy` gem to the `Gemfile`, so the editor's JavaScript and
-  stylesheets are loaded.
 - Imports Lexxy in `application.js`. With import maps, it pins `lexxy` and
   `@rails/activestorage`. With a JavaScript bundler, it installs the
   `@37signals/lexxy` and `@rails/activestorage` packages instead.
@@ -87,9 +85,9 @@ It will do the following:
 
 The installer sets up the editor named by
 [`config.action_text.editor`](configuring.html#config-action-text-editor). For
-applications that use Trix, it installs the `trix` and `@rails/actiontext`
-JavaScript packages instead, and creates an `actiontext.css` that includes all
-Trix styles and overrides. To choose the editor explicitly, pass `--editor`:
+applications that use Trix, it adds the `action_text-trix` gem, installs the
+`trix` and `@rails/actiontext` JavaScript packages instead, and creates an
+`actiontext.css` that includes all Trix styles and overrides. To choose the editor explicitly, pass `--editor`:
 
 ```bash
 $ bin/rails action_text:install --editor=trix
@@ -225,6 +223,10 @@ editor explicitly:
 # config/application.rb
 config.action_text.editor = :trix
 ```
+
+Lexxy comes with Action Text. Applications that use Trix also need the
+`action_text-trix` gem in their Gemfile, which provides Trix's JavaScript and
+stylesheets.
 
 Both editors store rich text in the canonical format Action Text expects,
 including `<action-text-attachment>` elements for attachments, so content saved

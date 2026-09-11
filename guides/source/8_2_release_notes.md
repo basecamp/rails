@@ -225,6 +225,9 @@ Please refer to the [Changelog][action-text] for detailed changes.
 
 ### Removals
 
+*   Remove the `action_text-trix` dependency. Applications that use Trix add
+    `gem "action_text-trix"` to their Gemfile.
+
 ### Deprecations
 
 *   Deprecate Trix-specific classes, modules, and methods:

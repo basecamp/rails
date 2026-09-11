@@ -4128,6 +4128,14 @@ module ApplicationTests
       assert_equal "trix", ActionText::RichText.editor.editor_name
     end
 
+    test "config.action_text.editor set after config.load_defaults takes precedence" do
+      add_to_config "config.action_text.editor = :trix"
+
+      app "development"
+
+      assert_equal "trix", ActionText::RichText.editor.editor_name
+    end
+
     test "config.action_text.editor can be set to :lexxy for upgraded apps" do
       remove_from_config '.*config\.load_defaults.*\n'
 

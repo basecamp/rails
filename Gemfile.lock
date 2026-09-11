@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/basecamp/lexxy.git
-  revision: 755420ed4c83fa2ed3ca9ea9ca8966c9492f3091
-  branch: depend-on-railties
+  revision: cce4787d25fe5b049eb792e088e8647551644da3
+  branch: rails-action-text-default
   specs:
     lexxy (0.9.31)
       railties (>= 8.0.2)
@@ -40,7 +40,6 @@ PATH
       rails-html-sanitizer (~> 1.7)
       useragent (~> 0.16)
     actiontext (8.2.0.alpha)
-      action_text-trix (~> 2.1.16)
       actionpack (= 8.2.0.alpha)
       activerecord (= 8.2.0.alpha)
       activestorage (= 8.2.0.alpha)
@@ -693,6 +692,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  action_text-trix
   argon2 (~> 2.3.2)
   aws-sdk-s3
   aws-sdk-sns

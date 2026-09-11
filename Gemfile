@@ -3,8 +3,11 @@
 source "https://rubygems.org"
 gemspec
 
-# Until a Lexxy release depends on railties instead of rails (basecamp/lexxy#1260).
-gem "lexxy", github: "basecamp/lexxy", branch: "depend-on-railties", require: false
+# The Action Text dummy application uses Trix.
+gem "action_text-trix"
+
+# Until a Lexxy release includes basecamp/lexxy#1260, #1261 and #1262.
+gem "lexxy", github: "basecamp/lexxy", branch: "rails-action-text-default"
 
 gem "minitest", "~> 6.0"
 gem "minitest-mock"

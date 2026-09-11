@@ -13,6 +13,9 @@ module ActionText
       include Rails::Generators::JsPackageManager
 
       EDITORS = %w[ lexxy trix ].freeze
+      LOAD_DEFAULTS = /^\s*config\.load_defaults.*\n/
+      EDITOR_ASSIGNMENT = /^[ \t]*config\.action_text\.editor[ \t]*=[ \t]*:\w+[ \t]*\n/
+      EDITOR_SETTING = /^[^#\n]*config\.action_text\.editor\s*=/
 
       source_root File.expand_path("templates", __dir__)
 
@@ -26,9 +29,30 @@ module ActionText
         end
       end
 
+      def configure_editor
+        return unless options[:editor] && options[:editor] != configured_editor
+
+        editor_setting = "config.action_text.editor = :#{editor}\n"
+        application_path = File.join(destination_root, "config/application.rb")
+
+        # Replace plain assignments with one after config.load_defaults, which would
+        # otherwise replace an assignment that comes before it.
+        gsub_file application_path, EDITOR_ASSIGNMENT, "" if File.read(application_path).match?(EDITOR_ASSIGNMENT)
+
+        if File.read(application_path).match?(LOAD_DEFAULTS)
+          inject_into_file application_path, optimize_indentation(editor_setting, 4), after: LOAD_DEFAULTS
+        else
+          environment editor_setting
+        end
+
+        conflicting_editor_settings.each do |path|
+          say "#{path} sets config.action_text.editor to something other than :#{editor}, which can take precedence. Update it to :#{editor}.", :yellow
+        end
+      end
+
       def add_editor_gem
-        if lexxy? && !gemfile_includes?("lexxy")
-          bundle_command("add lexxy", {}, quiet: true)
+        if trix? && !gemfile_includes?("action_text-trix")
+          bundle_command("add action_text-trix", {}, quiet: true)
         end
       end
 
@@ -94,8 +118,25 @@ module ActionText
           end
         end
 
+        def conflicting_editor_settings
+          paths = [ File.join(destination_root, "config/application.rb") ] +
+            Dir[File.join(destination_root, "config/{initializers/**,environments}/*.rb")].sort
+
+          paths.filter_map do |path|
+            conflicting = File.read(path).each_line.any? do |line|
+              line.match?(EDITOR_SETTING) && !line.match?(/config\.action_text\.editor\s*=\s*:#{editor}\b/)
+            end
+
+            Pathname(path).relative_path_from(destination_root).to_s if conflicting
+          end
+        end
+
         def lexxy?
           editor == "lexxy"
+        end
+
+        def trix?
+          editor == "trix"
         end
 
         def gemfile_includes?(gem_name)
