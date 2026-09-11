@@ -96,11 +96,14 @@ class ActionText::RichTextEditorTest < ApplicationSystemTestCase
     evaluate_script("window.capturedEvents").map(&:deep_symbolize_keys!)
   end
 
-  def while_offline(value, &block)
-    # raises unknown error: network conditions must be set before it can be retrieved
-    # unless set to an initial value
-    page.driver.browser.network_conditions = { offline: !value }
+  def while_offline(value)
+    # Set and reset the conditions rather than reading them back: Chrome returns
+    # string keys, and Selenium adds its defaults as symbol keys when they're set
+    # again, which fails to serialize as duplicate keys.
+    page.driver.browser.network_conditions = { offline: value }
 
-    page.driver.browser.with(network_conditions: { offline: value }, &block)
+    yield
+  ensure
+    page.driver.browser.network_conditions = { offline: false }
   end
 end
