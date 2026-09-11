@@ -7,14 +7,16 @@ require "action_view/helpers/tags/placeholderable"
 
 module ActionText
   module TagHelper
-    # Returns a `trix-editor` tag that instantiates the Trix JavaScript editor as
-    # well as a hidden field that Trix will write to on changes, so the content will
-    # be sent on form submissions.
+    # Returns the tag for the editor configured by `config.action_text.editor`, so
+    # the content will be sent on form submissions. For Lexxy, that is a
+    # `lexxy-editor` element that holds the content in its `value` attribute. For
+    # Trix, it is a `trix-editor` tag that instantiates the Trix JavaScript editor
+    # as well as a hidden field that Trix will write to on changes.
     #
     # #### Options
-    # *   `:class` - Defaults to "trix-content" so that default styles will be
-    #     applied. Setting this to a different value will prevent default styles
-    #     from being applied.
+    # *   `:class` - Defaults to the editor's content class, "lexxy-content" or
+    #     "trix-content", so that default styles will be applied. Setting this to a
+    #     different value will prevent default styles from being applied.
     # *   `[:data][:direct_upload_url]` - Defaults to `rails_direct_uploads_url`.
     # *   `[:data][:blob_url_template]` - Defaults to
     #     `rails_service_blob_url(":signed_id", ":filename")`.
@@ -23,9 +25,13 @@ module ActionText
     # #### Example
     #
     #     rich_textarea_tag "content", message.content
+    #     # With Lexxy:
+    #     # <lexxy-editor name="content" value="..." class="lexxy-content" ...></lexxy-editor>
+    #     # With Trix:
     #     # <input type="hidden" name="content" id="trix_input_post_1">
     #     # <trix-editor id="content" input="trix_input_post_1" class="trix-content" ...></trix-editor>
     #
+    #     # With Trix, the block provides the default content:
     #     rich_textarea_tag "content", nil do
     #       "<h1>Default content</h1>"
     #     end
@@ -60,13 +66,15 @@ module ActionView::Helpers
   end
 
   module FormHelper
-    # Returns a `trix-editor` tag that instantiates the Trix JavaScript editor as
-    # well as a hidden field that Trix will write to on changes, so the content will
-    # be sent on form submissions.
+    # Returns the tag for the editor configured by `config.action_text.editor`, so
+    # the content will be sent on form submissions. For Lexxy, that is a
+    # `lexxy-editor` element that holds the content in its `value` attribute. For
+    # Trix, it is a `trix-editor` tag that instantiates the Trix JavaScript editor
+    # as well as a hidden field that Trix will write to on changes.
     #
     # #### Options
-    # *   `:class` - Defaults to "trix-content" which ensures default styling is
-    #     applied.
+    # *   `:class` - Defaults to the editor's content class, "lexxy-content" or
+    #     "trix-content", which ensures default styling is applied.
     # *   `:value` - Adds a default value to the HTML input tag.
     # *   `[:data][:direct_upload_url]` - Defaults to `rails_direct_uploads_url`.
     # *   `[:data][:blob_url_template]` - Defaults to
@@ -75,6 +83,9 @@ module ActionView::Helpers
     #
     # #### Example
     #     rich_textarea :message, :content
+    #     # With Lexxy:
+    #     # <lexxy-editor id="message_content" name="message[content]" value="..." class="lexxy-content" ...></lexxy-editor>
+    #     # With Trix:
     #     # <input type="hidden" name="message[content]" id="message_content_trix_input_message_1">
     #     # <trix-editor id="content" input="message_content_trix_input_message_1" class="trix-content" ...></trix-editor>
     #
@@ -82,6 +93,7 @@ module ActionView::Helpers
     #     # <input type="hidden" name="message[content]" id="message_content_trix_input_message_1" value="&lt;h1&gt;Default message&lt;/h1&gt;">
     #     # <trix-editor id="content" input="message_content_trix_input_message_1" class="trix-content" ...></trix-editor>
     #
+    #     # With Trix, the block provides the default content:
     #     rich_textarea :message, :content do
     #       "<h1>Default message</h1>"
     #     end

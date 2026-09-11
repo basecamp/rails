@@ -235,6 +235,10 @@ Please refer to the [Changelog][action-text] for detailed changes.
 
 ### Notable changes
 
+*   Lexxy is the default Action Text editor for new applications, replacing Trix.
+    Upgraded applications keep Trix until they set
+    `config.action_text.editor = :lexxy` or `config.load_defaults "8.2"`.
+
 Action Mailbox
 ----------
 

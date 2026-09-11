@@ -17,6 +17,7 @@ module ActionText
 
     config.action_text = ActiveSupport::OrderedOptions.new
     config.action_text.editors = ActiveSupport::InheritableOptions.new(
+      lexxy: {},
       trix: {}
     )
     config.action_text.editor = :trix

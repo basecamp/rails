@@ -10,6 +10,9 @@ module Dummy
   class Application < Rails::Application
     config.load_defaults Rails::VERSION::STRING.to_f
 
+    # The dummy application's forms and system tests exercise Trix.
+    config.action_text.editor = :trix
+
     # For compatibility with applications that use this config
     config.action_controller.include_all_helpers = false
 

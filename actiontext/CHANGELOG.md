@@ -1,3 +1,22 @@
+*   Make Lexxy the default Action Text editor for new applications.
+
+    New applications, and applications that set `config.load_defaults "8.2"`,
+    render `rich_textarea` with [Lexxy](https://github.com/basecamp/lexxy)
+    instead of Trix. Action Text includes an editor adapter for Lexxy next to
+    the Trix one, and `bin/rails action_text:install` installs the editor named
+    by `config.action_text.editor`, or by its new `--editor` option. For Lexxy,
+    it adds the `lexxy` gem, its JavaScript, and its stylesheet.
+
+    Existing applications keep Trix. To keep it after moving to
+    `config.load_defaults "8.2"`, set:
+
+        config.action_text.editor = :trix
+
+    Stored rich text does not need migrating, because Lexxy loads content saved
+    by Trix.
+
+    *Jorge Manrubia*
+
 *   Add alternative text to Action Text attachments.
 
     Attachments could only be described by their caption, which is always shown

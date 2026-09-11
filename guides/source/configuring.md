@@ -66,6 +66,7 @@ Below are the default values associated with each target version. In cases of co
 - [`config.action_controller.rescue_from_event_backtrace`](#config-action-controller-rescue-from-event-backtrace): `:array`
 - [`config.action_dispatch.default_headers`](#config-action-dispatch-default-headers): `{ "X-Frame-Options" => "SAMEORIGIN", "X-Content-Type-Options" => "nosniff", "X-Permitted-Cross-Domain-Policies" => "none", "Referrer-Policy" => "strict-origin-when-cross-origin" }`
 - [`config.action_dispatch.strict_accept_header`](#config-action-dispatch-strict-accept-header): `true`
+- [`config.action_text.editor`](#config-action-text-editor): `:lexxy`
 - [`config.active_job.enqueue_after_transaction_commit`](#config-active-job-enqueue-after-transaction-commit): `true`
 - [`config.active_record.postgresql_adapter_decode_bytea`](#config-active-record-postgresql-adapter-decode-bytea): `true`
 - [`config.active_record.postgresql_adapter_decode_money`](#config-active-record-postgresql-adapter-decode-money): `true`
@@ -3909,6 +3910,19 @@ of use cases. If you need multiple byte range support, you can increase that set
 #### `config.action_text.attachment_tag_name`
 
 Accepts a string for the HTML tag used to wrap attachments. Defaults to `"action-text-attachment"`.
+
+#### `config.action_text.editor`
+
+Sets the editor that `rich_textarea` renders. The value names an editor registered in `config.action_text.editors`, which includes `:lexxy` and `:trix`.
+
+The default value depends on the `config.load_defaults` target version:
+
+| Starting with version | The default value is |
+| --------------------- | -------------------- |
+| (original)            | `:trix`              |
+| 8.2                   | `:lexxy`             |
+
+The JavaScript and stylesheets for Lexxy are provided by the [`lexxy`](https://github.com/basecamp/lexxy) gem, which `bin/rails action_text:install` adds to applications that use Lexxy. Trix is provided by the `action_text-trix` gem, which Action Text depends on. See [Upgrading from Rails 8.1 to Rails 8.2](upgrading_ruby_on_rails.html#lexxy-is-the-default-action-text-editor) for switching an existing application.
 
 #### `config.action_text.sanitizer_vendor`
 

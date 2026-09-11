@@ -3,40 +3,23 @@
 # :markup: markdown
 
 require "pathname"
+require "rails/generators/bundle_helper"
 require "rails/generators/js_package_manager"
 
 module ActionText
   module Generators
     class InstallGenerator < ::Rails::Generators::Base
+      include Rails::Generators::BundleHelper
       include Rails::Generators::JsPackageManager
 
       source_root File.expand_path("templates", __dir__)
 
-      class_option :editor, type: :string, default: "trix"
+      class_option :editor, type: :string, enum: %w[ lexxy trix ],
+        desc: "The rich text editor to install. Defaults to config.action_text.editor"
 
-      def install_editor
-        return unless using_js_runtime?
-
-        editor = options[:editor]
-
-        say "Installing #{editor} JavaScript dependency", :green
-        run package_add_command(editor)
-      end
-
-      def append_editor
-        destination = Pathname(destination_root)
-        editor = options[:editor]
-
-        if (application_javascript_path = destination.join("app/javascript/application.js")).exist?
-          insert_into_file application_javascript_path.to_s, %(\nimport "#{editor}"\n)
-        else
-          say <<~INSTRUCTIONS, :green
-            You must import the #{editor} JavaScript module in your application entrypoint.
-          INSTRUCTIONS
-        end
-
-        if (importmap_path = destination.join("config/importmap.rb")).exist?
-          append_to_file importmap_path.to_s, %(pin "#{editor}"\n)
+      def add_editor_gem
+        if lexxy? && !gemfile_includes?("lexxy")
+          bundle_command("add lexxy", {}, quiet: true)
         end
       end
 
@@ -44,34 +27,42 @@ module ActionText
         return unless using_js_runtime?
 
         say "Installing JavaScript dependencies", :green
-        run package_add_command("@rails/actiontext")
+        javascript_packages.each do |package|
+          run package_add_command(package)
+        end
       end
 
       def append_javascript_dependencies
         destination = Pathname(destination_root)
 
         if (application_javascript_path = destination.join("app/javascript/application.js")).exist?
-          insert_into_file application_javascript_path.to_s, %(\nimport "@rails/actiontext"\n)
+          javascript_modules.each do |javascript_module|
+            insert_into_file application_javascript_path.to_s, %(\nimport "#{javascript_module}"\n)
+          end
         else
-          say <<~INSTRUCTIONS, :green
-            You must import the @rails/actiontext JavaScript module in your application entrypoint.
-          INSTRUCTIONS
+          javascript_modules.each do |javascript_module|
+            say <<~INSTRUCTIONS, :green
+              You must import the #{javascript_module} JavaScript module in your application entrypoint.
+            INSTRUCTIONS
+          end
         end
 
         if (importmap_path = destination.join("config/importmap.rb")).exist?
-          append_to_file importmap_path.to_s, %(pin "@rails/actiontext", to: "actiontext.esm.js"\n)
+          importmap_pins.each do |pin|
+            append_to_file importmap_path.to_s, "#{pin}\n"
+          end
         end
       end
 
       def create_actiontext_files
-        template "actiontext.css", "app/assets/stylesheets/actiontext.css"
+        template "#{editor}/actiontext.css", "app/assets/stylesheets/actiontext.css"
 
         gem_root = "#{__dir__}/../../../.."
 
         copy_file "#{gem_root}/app/views/active_storage/blobs/_blob.html.erb",
           "app/views/active_storage/blobs/_blob.html.erb"
 
-        copy_file "#{gem_root}/app/views/layouts/action_text/contents/_content.html.erb",
+        template "layouts/action_text/contents/_content.html.erb",
           "app/views/layouts/action_text/contents/_content.html.erb"
       end
 
@@ -80,6 +71,51 @@ module ActionText
       end
 
       hook_for :test_framework
+
+      private
+        def editor
+          @editor ||= options[:editor] || (lexxy_configured? ? "lexxy" : "trix")
+        end
+
+        def lexxy?
+          editor == "lexxy"
+        end
+
+        def lexxy_configured?
+          Rails.application.config.respond_to?(:action_text) &&
+            Rails.application.config.action_text.editor.to_s == "lexxy"
+        end
+
+        def gemfile_includes?(gem_name)
+          gemfile = Pathname(destination_root).join("Gemfile")
+          gemfile.exist? && gemfile.read.match?(/^\s*gem ["']#{gem_name}["']/)
+        end
+
+        def javascript_packages
+          lexxy? ? %w[ @37signals/lexxy @rails/activestorage ] : %w[ trix @rails/actiontext ]
+        end
+
+        def javascript_modules
+          if !lexxy?
+            %w[ trix @rails/actiontext ]
+          elsif importmap?
+            %w[ lexxy ]
+          else
+            %w[ @37signals/lexxy ]
+          end
+        end
+
+        def importmap_pins
+          if lexxy?
+            [ %(pin "lexxy", to: "lexxy.js"), %(pin "@rails/activestorage", to: "activestorage.esm.js") ]
+          else
+            [ %(pin "trix"), %(pin "@rails/actiontext", to: "actiontext.esm.js") ]
+          end
+        end
+
+        def importmap?
+          Pathname(destination_root).join("config/importmap.rb").exist?
+        end
     end
   end
 end

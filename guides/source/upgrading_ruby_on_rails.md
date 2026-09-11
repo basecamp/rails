@@ -111,6 +111,26 @@ Book.not_published # => [book2]
 Book.not_published # => [book2, book3]
 ```
 
+### Lexxy is the default Action Text editor
+
+New Rails 8.2 applications, and applications that set `config.load_defaults "8.2"`, use [Lexxy](https://github.com/basecamp/lexxy) as their Action Text editor instead of [Trix](https://trix-editor.org/). `rich_textarea` renders a `<lexxy-editor>` element in place of `<trix-editor>`.
+
+Upgraded applications keep Trix. If your application calls `config.load_defaults` with a version before 8.2, nothing changes. To move `config.load_defaults` to 8.2 and keep Trix, set the editor explicitly:
+
+```ruby
+# config/application.rb
+config.action_text.editor = :trix
+```
+
+To switch an existing application to Lexxy:
+
+1. Add the `lexxy` gem, which provides the editor's JavaScript and stylesheets.
+2. Replace the `trix` and `@rails/actiontext` JavaScript imports with Lexxy's, as described in [Lexxy's installation instructions](https://lexxy.dev/docs/).
+3. Uncomment `Rails.application.config.action_text.editor = :lexxy` in `config/initializers/new_framework_defaults_8_2.rb`.
+4. Change the `trix-content` class to `lexxy-content` in `app/views/layouts/action_text/contents/_content.html.erb`, so rendered rich text uses Lexxy's styles.
+
+Stored rich text does not need migrating. Action Text renders stored content without involving the editor, and attachments are stored as `<action-text-attachment>` elements whichever editor created them, so existing records keep rendering. Lexxy loads content saved by Trix. A record saved from Lexxy uses Lexxy's markup, such as `<p>` paragraphs where Trix writes `<div>` and `<br>` elements. Trix can still load that content if you switch back.
+
 Upgrading from Rails 8.0 to Rails 8.1
 -------------------------------------
 
